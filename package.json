@@ -1,0 +1,22 @@
+{
+  "name": "pagina",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Damianc326/Damianc326.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Damianc326/Damianc326/issues"
+  },
+  "homepage": "https://github.com/Damianc326/Damianc326#readme",
+  "dependencies": {}
+}
