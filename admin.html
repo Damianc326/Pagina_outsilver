@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración | Out Silver</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #1a1a1a;
+            --color-accent: #ff5000;
+            --color-bg: #f9f9f9;
+            --color-surface: #ffffff;
+            --color-border: #e0e0e0;
+            --color-text: #333333;
+            --color-text-muted: #666666;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 30px;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+        
+        .sidebar-logo span {
+            color: var(--color-accent);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            width: 100%;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 15px 25px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--color-accent);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .admin-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--color-surface);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--color-primary);
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: var(--color-text-muted);
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--color-primary);
+        }
+
+        input, select, textarea {
+            padding: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--color-accent);
+        }
+
+        .btn {
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background-color: var(--color-accent);
+        }
+
+        .btn-primary:hover {
+            background-color: #e64800;
+            box-shadow: 0 4px 12px rgba(255, 80, 0, 0.25);
+        }
+
+        .actions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .current-products-box {
+            background-color: #f0f4f8;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+
+        .help-text {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <a href="index.html" class="sidebar-logo">OUT<span>SILVER</span></a>
+        <ul class="sidebar-menu">
+            <li><a href="admin.html" class="active">Panel de Administración</a></li>
+            <li><a href="editar.html">Editar Producto</a></li>
+            <li><a href="stock.html">Gestión de Stock</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="admin-container">
+        <h1>⚙️ Panel de Administración Privado</h1>
+        <p class="subtitle">Agrega nuevos productos a tu tienda de manera fácil y segura. Solo tú tienes acceso a este panel.</p>
+
+        <div class="current-products-box" id="status-box">
+            Cargando base de datos local...
+        </div>
+
+        <form id="product-form">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="titulo">Nombre del Producto</label>
+                    <input type="text" id="titulo" placeholder="Ej: Polera Classic Negra" required>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="descripcion">Descripción Corta</label>
+                    <textarea id="descripcion" rows="2" placeholder="Breve descripción que aparece debajo del título" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="precio">Precio Actual (S/)</label>
+                    <input type="number" id="precio" step="0.01" placeholder="25.00" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="precio_regular">Precio Regular (Tachado) (Opcional)</label>
+                    <input type="number" id="precio_regular" step="0.01" placeholder="35.00">
+                </div>
+
+                <div class="form-group">
+                    <label for="categoria">Categoría</label>
+                    <select id="categoria" required>
+                        <option value="polos">Polos</option>
+                        <option value="pantalones">Pantalones</option>
+                        <option value="shorts">Shorts</option>
+                        <option value="poleras">Poleras</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="tipo">Tipo de Prenda</label>
+                    <input type="text" id="tipo" placeholder="Ej: Polo, Short, Jogger" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="material">Material</label>
+                    <input type="text" id="material" placeholder="Ej: Algodón Premium" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="oferta">Etiqueta Especial (Opcional)</label>
+                    <select id="oferta">
+                        <option value="">Ninguna</option>
+                        <option value="nuevo">Nuevo</option>
+                        <option value="sale">Oferta</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="tallas">Tallas Disponibles (Separadas por comas)</label>
+                    <input type="text" id="tallas" value="4,6,8,10,12,14,16" required>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="imagen_principal">Imagen Principal</label>
+                    <input type="file" id="imagen_principal" accept="image/*" required>
+                    <div id="image_preview" style="margin-top: 15px; display: none;">
+                        <img id="preview_img" src="" style="max-width: 200px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    </div>
+                    <div class="image-format-info" style="margin-top: 15px; padding: 12px 15px; background-color: #f0f7ff; border-left: 4px solid #007bff; border-radius: 6px; font-size: 0.9em; color: #333;">
+                        <strong style="color: #0056b3;">ℹ️ Formato de Imagen Recomendado</strong>
+                        <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #555;">
+                            <li><strong>Tamaño:</strong> Proporción cuadrada (ej. 800x800px o 1000x1000px).</li>
+                            <li><strong>Formatos aceptados:</strong> JPG, PNG o WEBP.</li>
+                            <li><strong>Peso:</strong> Máximo sugerido 1MB (para que tu tienda cargue rápido).</li>
+                        </ul>
+                        <p style="margin: 8px 0 0 0; font-size: 0.85em; color: #666;">
+                            <em>* No olvides que el archivo seleccionado debe existir también dentro de la carpeta <strong>"images"</strong> de tu proyecto para que se muestre correctamente.</em>
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn" id="btn-clear">Limpiar Formulario</button>
+                <button type="submit" class="btn btn-primary" id="btn-save">Guardar Nuevo Producto</button>
+            </div>
+        </form>
+    </div>
+    </main>
+
+    <!-- Cargar la base de datos actual para saber cuántos hay -->
+    <script src="js/productos-db.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusBox = document.getElementById('status-box');
+            
+            if (window.productosData && Array.isArray(window.productosData)) {
+                statusBox.innerHTML = `<strong>Estado:</strong> Conectado a la base de datos. Tienes <strong>${window.productosData.length} productos</strong> actualmente.`;
+            } else {
+                statusBox.innerHTML = `<strong style="color:red;">Error:</strong> No se pudo cargar js/productos-db.js.`;
+                window.productosData = [];
+            }
+
+            const imagenInput = document.getElementById('imagen_principal');
+            const previewContainer = document.getElementById('image_preview');
+            const previewImg = document.getElementById('preview_img');
+
+            imagenInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    previewContainer.style.display = 'none';
+                    previewImg.src = "";
+                }
+            });
+
+            document.getElementById('product-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                // Verificar que el navegador soporte File System Access API
+                if (!window.showSaveFilePicker) {
+                    alert('Tu navegador no soporta el guardado directo de archivos (File System Access API). Por favor usa Google Chrome, Microsoft Edge, o Brave en tu PC.');
+                    return;
+                }
+
+                const newId = 'card-' + (Math.floor(Math.random() * 10000));
+                
+                const imageFile = document.getElementById('imagen_principal').files[0];
+                const imagePath = imageFile ? "images/" + imageFile.name : "";
+
+                const nuevoProducto = {
+                    id: newId,
+                    titulo: document.getElementById('titulo').value,
+                    descripcion: document.getElementById('descripcion').value,
+                    precio: parseFloat(document.getElementById('precio').value).toFixed(2),
+                    precio_regular: document.getElementById('precio_regular').value ? parseFloat(document.getElementById('precio_regular').value).toFixed(2) : "",
+                    categoria: document.getElementById('categoria').value,
+                    tipo: document.getElementById('tipo').value,
+                    material: document.getElementById('material').value,
+                    oferta: document.getElementById('oferta').value,
+                    tallas: document.getElementById('tallas').value,
+                    imagen_principal: imagePath,
+                    rating: "5.0", // Por defecto
+                    reviews: "0",
+                    colores_hex: [], // Se puede expandir en el futuro
+                    colores_imagenes: {},
+                    caracteristicas: [],
+                    stock: {}
+                };
+
+                // Agregar a la base de datos en memoria
+                window.productosData.push(nuevoProducto);
+
+                // Convertir a texto JavaScript
+                const jsContent = `window.productosData = ${JSON.stringify(window.productosData, null, 4)};`;
+
+                try {
+                    // Pedir al usuario que seleccione el archivo a sobrescribir
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: 'productos-db.js',
+                        types: [{
+                            description: 'JavaScript File',
+                            accept: {'text/javascript': ['.js']},
+                        }],
+                    });
+
+                    // Crear un "escritor" y guardar el contenido
+                    const writable = await handle.createWritable();
+                    await writable.write(jsContent);
+                    await writable.close();
+
+                    alert('¡Producto agregado y guardado con éxito! Recarga tu tienda para verlo.');
+                    document.getElementById('product-form').reset();
+                    previewContainer.style.display = 'none';
+                    previewImg.src = "";
+                    statusBox.innerHTML = `<strong>Estado:</strong> Conectado a la base de datos. Tienes <strong>${window.productosData.length} productos</strong> actualmente.`;
+                    
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.error(error);
+                        alert('Hubo un error al guardar el archivo: ' + error.message);
+                    }
+                }
+            });
+
+            document.getElementById('btn-clear').addEventListener('click', () => {
+                document.getElementById('product-form').reset();
+                previewContainer.style.display = 'none';
+                previewImg.src = "";
+            });
+        });
+    </script>
+</body>
+</html>
