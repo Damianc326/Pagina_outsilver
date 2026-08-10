@@ -194,48 +194,40 @@ const cartDrawer = document.getElementById('cart-drawer');
                 showToast('⚠️ Completa tus datos, agencia y destino de envío de forma correcta.');
                 return;
             }
-            
-            let message = '¡Hola! Quisiera comprar los siguientes productos en Out Silver:\n\n';
-            let subtotal = 0;
-            
-            cartItems.forEach(item => {
-                const itemTotal = item.price * item.qty;
-                subtotal += itemTotal;
-                message += `- ${item.qty}x ${item.title} (Talla: ${item.size}, Color: ${item.color || 'Único'}) - S/ ${itemTotal.toFixed(2)}\n`;
-            });
-            
-            message += `\n*Datos del Comprador:*\n`;
-            message += `- Nombre Completo: ${name}\n`;
-            message += `- Documento: ${docType} (${docNumber})\n\n`;
 
+            // Build checkout data for the payment modal
             const finalAgency = agency === 'Shalom' && selectedShalomAgency 
                 ? `Shalom (Agencia: ${selectedShalomAgency.name})` 
-                : customAgency;
+                : agency === 'Otra' ? customAgency : agency;
             const finalDestination = agency === 'Shalom' && selectedShalomAgency
                 ? selectedShalomAgency.address
                 : destination;
 
-            message += `*Datos de Envío:*\n`;
-            message += `- Agencia: ${finalAgency}\n`;
-            message += `- Destino: ${finalDestination}\n\n`;
-            
+            let subtotal = 0;
+            cartItems.forEach(item => { subtotal += item.price * item.qty; });
             const shippingCost = agency === 'Otra' ? 20 : 0;
             const total = subtotal + shippingCost;
+
+            const checkoutData = {
+                items: cartItems.map(item => ({ ...item })),
+                name: name,
+                docType: docType,
+                docNumber: docNumber,
+                agency: finalAgency,
+                destination: finalDestination,
+                shippingCost: shippingCost,
+                subtotal: subtotal,
+                total: total
+            };
+
+            // Close cart drawer and open payment modal
+            cartDrawer.classList.add('hidden');
             
-            message += `*Subtotal:* S/ ${subtotal.toFixed(2)}\n`;
-            if (shippingCost > 0) {
-                message += `- Costo de Envío: S/ ${shippingCost.toFixed(2)} (Otra Agencia)\n`;
+            if (typeof openPaymentModal === 'function') {
+                openPaymentModal(checkoutData);
             } else {
-                message += `- Costo de Envío: Gratis (Agencia Shalom)\n`;
+                showToast('⚠️ Error: módulo de pago no disponible.');
             }
-            message += `*Total Final:* S/ ${total.toFixed(2)}\n\n`;
-            message += 'Por favor, confírmame disponibilidad y los pasos para el pago. ¡Gracias!';
-            
-            const encodedMessage = encodeURIComponent(message);
-            const phoneNumber = '51966314626'; 
-            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-            
-            window.open(whatsappUrl, '_blank');
         });
     }
 

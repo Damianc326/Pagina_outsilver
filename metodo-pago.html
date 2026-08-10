@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Método de Pago | Out Silver</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #1a1a1a;
+            --color-accent: #ff5000;
+            --color-bg: #f9f9f9;
+            --color-surface: #ffffff;
+            --color-border: #e0e0e0;
+            --color-text: #333333;
+            --color-text-muted: #666666;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 30px;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+        
+        .sidebar-logo span {
+            color: var(--color-accent);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            width: 100%;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 15px 25px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--color-accent);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .admin-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--color-surface);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--color-primary);
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: var(--color-text-muted);
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--color-primary);
+        }
+
+        input, select, textarea {
+            padding: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: var(--color-accent);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .help-text {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+        }
+
+        /* Section cards */
+        .payment-section {
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .payment-section.general-section::before {
+            background: linear-gradient(90deg, #333, #555);
+        }
+
+        .payment-section.yape-section::before {
+            background: linear-gradient(90deg, #6B2FA0, #8B3FC0);
+        }
+
+        .payment-section.plin-section::before {
+            background: linear-gradient(90deg, #00B140, #00D14F);
+        }
+
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 0 0 18px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        .yape-section .section-title .badge {
+            background: linear-gradient(135deg, #6B2FA0, #8B3FC0);
+        }
+
+        .plin-section .section-title .badge {
+            background: linear-gradient(135deg, #00B140, #00D14F);
+        }
+
+        /* QR Upload */
+        .qr-upload-area {
+            border: 2px dashed var(--color-border);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .qr-upload-area:hover {
+            border-color: var(--color-accent);
+            background: #fff8f5;
+        }
+
+        .qr-upload-area .upload-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .qr-upload-area .upload-text {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .qr-upload-area .upload-hint {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+
+        .qr-preview {
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+        }
+
+        .qr-preview.visible {
+            display: block;
+        }
+
+        .qr-preview img {
+            max-width: 200px;
+            border-radius: 12px;
+            border: 1px solid var(--color-border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .qr-preview .remove-qr {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 16px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #e74c3c;
+            background: #fde8e8;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .qr-preview .remove-qr:hover {
+            background: #f8d0d0;
+        }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background-color: var(--color-accent);
+        }
+
+        .btn-primary:hover {
+            background-color: #e64800;
+            box-shadow: 0 4px 12px rgba(255, 80, 0, 0.25);
+        }
+
+        .actions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        /* Status bar */
+        .status-box {
+            background-color: #f0f4f8;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+
+        .status-box.success {
+            background-color: #e8f8ef;
+            color: #27ae60;
+            border-left: 4px solid #27ae60;
+        }
+
+        /* Toast */
+        .toast-notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--color-primary);
+            color: white;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 9999;
+            animation: toastIn 0.3s ease;
+            transition: opacity 0.3s;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* History section */
+        .codes-history {
+            margin-top: 25px;
+            border-top: 1px solid var(--color-border);
+            padding-top: 25px;
+        }
+
+        .codes-history h3 {
+            font-size: 1.1rem;
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .codes-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        .codes-table th {
+            background: #f5f5f5;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-muted);
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .codes-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .codes-table tr:hover td {
+            background: #fafafa;
+        }
+
+        .codes-empty {
+            text-align: center;
+            padding: 25px;
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+
+        .btn-clear-history {
+            background: #fde8e8;
+            color: #e74c3c;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-clear-history:hover {
+            background: #f8d0d0;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .method-badge.yape { background: #6B2FA0; }
+        .method-badge.plin { background: #00B140; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <a href="index.html" class="sidebar-logo">OUT<span>SILVER</span></a>
+        <ul class="sidebar-menu">
+            <li><a href="admin.html">Panel de Administración</a></li>
+            <li><a href="editar.html">Editar Producto</a></li>
+            <li><a href="stock.html">Gestión de Stock</a></li>
+            <li><a href="metodo-pago.html" class="active">Método de Pago</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="admin-container">
+            <h1>💳 Método de Pago</h1>
+            <p class="subtitle">Configura tus datos de Yape y Plin para recibir pagos. Los clientes verán esta información al momento de pagar.</p>
+
+            <div class="status-box" id="status-box">
+                Cargando configuración guardada...
+            </div>
+
+            <!-- General Config -->
+            <div class="payment-section general-section">
+                <h3 class="section-title">⚙️ Configuración General</h3>
+                <div class="form-group">
+                    <label for="config-titular">Nombre del Titular de la Cuenta</label>
+                    <input type="text" id="config-titular" placeholder="Ej: Juan Pérez García" value="Out Silver Perú">
+                    <span class="help-text">Este nombre se mostrará al cliente para que verifique que está pagando a la persona correcta.</span>
+                </div>
+            </div>
+
+            <!-- Yape Config -->
+            <div class="payment-section yape-section">
+                <h3 class="section-title">
+                    <span class="badge">Y</span>
+                    Configuración de Yape
+                </h3>
+                <div class="form-group">
+                    <label for="config-yape-number">Número de Yape</label>
+                    <input type="tel" id="config-yape-number" placeholder="Ej: 966314626" value="966314626" maxlength="9">
+                    <span class="help-text">Número de celular asociado a tu cuenta Yape (9 dígitos).</span>
+                </div>
+                <div class="form-group">
+                    <label>Código QR de Yape (Opcional)</label>
+                    <div class="qr-upload-area" id="yape-qr-upload">
+                        <span class="upload-icon">📷</span>
+                        <div class="upload-text">Subir QR de Yape</div>
+                        <div class="upload-hint">Haz clic o arrastra tu imagen QR aquí</div>
+                    </div>
+                    <input type="file" id="yape-qr-input" accept="image/*" style="display: none;">
+                    <div class="qr-preview" id="yape-qr-preview">
+                        <img id="yape-qr-preview-img" src="" alt="QR Yape">
+                        <br>
+                        <button type="button" class="remove-qr" id="yape-qr-remove">✕ Quitar QR</button>
+                    </div>
+                    <span class="help-text">Si subes un QR, los clientes podrán escanearlo directamente desde tu tienda.</span>
+                </div>
+            </div>
+
+            <!-- Plin Config -->
+            <div class="payment-section plin-section">
+                <h3 class="section-title">
+                    <span class="badge">P</span>
+                    Configuración de Plin
+                </h3>
+                <div class="form-group">
+                    <label for="config-plin-number">Número de Plin</label>
+                    <input type="tel" id="config-plin-number" placeholder="Ej: 966314626" value="966314626" maxlength="9">
+                    <span class="help-text">Número de celular asociado a tu cuenta Plin (9 dígitos).</span>
+                </div>
+                <div class="form-group">
+                    <label>Código QR de Plin (Opcional)</label>
+                    <div class="qr-upload-area" id="plin-qr-upload">
+                        <span class="upload-icon">📷</span>
+                        <div class="upload-text">Subir QR de Plin</div>
+                        <div class="upload-hint">Haz clic o arrastra tu imagen QR aquí</div>
+                    </div>
+                    <input type="file" id="plin-qr-input" accept="image/*" style="display: none;">
+                    <div class="qr-preview" id="plin-qr-preview">
+                        <img id="plin-qr-preview-img" src="" alt="QR Plin">
+                        <br>
+                        <button type="button" class="remove-qr" id="plin-qr-remove">✕ Quitar QR</button>
+                    </div>
+                    <span class="help-text">Si subes un QR, los clientes podrán escanearlo directamente desde tu tienda.</span>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn btn-primary" id="btn-save-config">💾 Guardar Configuración</button>
+            </div>
+
+            <!-- Codes History -->
+            <div class="codes-history">
+                <h3>📋 Historial de Códigos de Operación</h3>
+                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0;">Códigos registrados por clientes que han verificado su pago. Se usa para detectar pagos duplicados.</p>
+                <div id="codes-history-content">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const PAYMENT_CONFIG_KEY = 'outsilver_payment_config';
+            const USED_CODES_KEY = 'outsilver_used_codes';
+
+            const statusBox = document.getElementById('status-box');
+            const titularInput = document.getElementById('config-titular');
+            const yapeNumberInput = document.getElementById('config-yape-number');
+            const plinNumberInput = document.getElementById('config-plin-number');
+            const yapeQrUpload = document.getElementById('yape-qr-upload');
+            const yapeQrInput = document.getElementById('yape-qr-input');
+            const yapeQrPreview = document.getElementById('yape-qr-preview');
+            const yapeQrPreviewImg = document.getElementById('yape-qr-preview-img');
+            const yapeQrRemove = document.getElementById('yape-qr-remove');
+            const plinQrUpload = document.getElementById('plin-qr-upload');
+            const plinQrInput = document.getElementById('plin-qr-input');
+            const plinQrPreview = document.getElementById('plin-qr-preview');
+            const plinQrPreviewImg = document.getElementById('plin-qr-preview-img');
+            const plinQrRemove = document.getElementById('plin-qr-remove');
+            const btnSave = document.getElementById('btn-save-config');
+
+            let currentConfig = {
+                titular: 'Out Silver Perú',
+                yape_number: '966314626',
+                plin_number: '966314626',
+                yape_qr: '',
+                plin_qr: ''
+            };
+
+            // --- LOAD SAVED CONFIG ---
+            function loadConfig() {
+                try {
+                    const saved = localStorage.getItem(PAYMENT_CONFIG_KEY);
+                    if (saved) {
+                        currentConfig = JSON.parse(saved);
+                        titularInput.value = currentConfig.titular || '';
+                        yapeNumberInput.value = currentConfig.yape_number || '';
+                        plinNumberInput.value = currentConfig.plin_number || '';
+
+                        if (currentConfig.yape_qr) {
+                            yapeQrPreviewImg.src = currentConfig.yape_qr;
+                            yapeQrPreview.classList.add('visible');
+                        }
+                        if (currentConfig.plin_qr) {
+                            plinQrPreviewImg.src = currentConfig.plin_qr;
+                            plinQrPreview.classList.add('visible');
+                        }
+
+                        statusBox.innerHTML = '<strong>✅ Estado:</strong> Configuración cargada correctamente.';
+                        statusBox.className = 'status-box success';
+                    } else {
+                        statusBox.innerHTML = '<strong>ℹ️ Estado:</strong> No hay configuración guardada. Configura tus datos y haz clic en "Guardar".';
+                    }
+                } catch (e) {
+                    statusBox.innerHTML = '<strong style="color:red;">Error:</strong> No se pudo leer la configuración guardada.';
+                }
+            }
+
+            loadConfig();
+
+            // --- QR UPLOAD HANDLERS ---
+            function setupQrUpload(uploadArea, fileInput, preview, previewImg, removeBtn, configKey) {
+                uploadArea.addEventListener('click', () => fileInput.click());
+
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.borderColor = '#ff5000';
+                    uploadArea.style.background = '#fff8f5';
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.style.borderColor = '';
+                    uploadArea.style.background = '';
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.borderColor = '';
+                    uploadArea.style.background = '';
+                    if (e.dataTransfer.files.length > 0) {
+                        processQrFile(e.dataTransfer.files[0], preview, previewImg, configKey);
+                    }
+                });
+
+                fileInput.addEventListener('change', () => {
+                    if (fileInput.files.length > 0) {
+                        processQrFile(fileInput.files[0], preview, previewImg, configKey);
+                    }
+                });
+
+                removeBtn.addEventListener('click', () => {
+                    currentConfig[configKey] = '';
+                    previewImg.src = '';
+                    preview.classList.remove('visible');
+                    fileInput.value = '';
+                });
+            }
+
+            function processQrFile(file, preview, previewImg, configKey) {
+                if (!file.type.startsWith('image/')) {
+                    showToast('⚠️ Solo se aceptan imágenes.');
+                    return;
+                }
+                if (file.size > 3 * 1024 * 1024) {
+                    showToast('⚠️ La imagen es muy grande. Máximo 3MB.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentConfig[configKey] = e.target.result;
+                    previewImg.src = e.target.result;
+                    preview.classList.add('visible');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            setupQrUpload(yapeQrUpload, yapeQrInput, yapeQrPreview, yapeQrPreviewImg, yapeQrRemove, 'yape_qr');
+            setupQrUpload(plinQrUpload, plinQrInput, plinQrPreview, plinQrPreviewImg, plinQrRemove, 'plin_qr');
+
+            // --- SAVE CONFIG ---
+            btnSave.addEventListener('click', () => {
+                const titular = titularInput.value.trim();
+                const yapeNumber = yapeNumberInput.value.trim();
+                const plinNumber = plinNumberInput.value.trim();
+
+                if (!titular) {
+                    showToast('⚠️ Ingresa el nombre del titular.');
+                    titularInput.focus();
+                    return;
+                }
+
+                if (!yapeNumber && !plinNumber) {
+                    showToast('⚠️ Ingresa al menos un número (Yape o Plin).');
+                    return;
+                }
+
+                currentConfig.titular = titular;
+                currentConfig.yape_number = yapeNumber;
+                currentConfig.plin_number = plinNumber;
+
+                try {
+                    localStorage.setItem(PAYMENT_CONFIG_KEY, JSON.stringify(currentConfig));
+                    showToast('✅ Configuración guardada correctamente.');
+                    statusBox.innerHTML = '<strong>✅ Estado:</strong> Configuración guardada correctamente.';
+                    statusBox.className = 'status-box success';
+                } catch (e) {
+                    showToast('❌ Error al guardar: ' + e.message);
+                }
+            });
+
+            // --- CODES HISTORY ---
+            function renderCodesHistory() {
+                const container = document.getElementById('codes-history-content');
+                let codes = [];
+                try {
+                    const data = localStorage.getItem(USED_CODES_KEY);
+                    if (data) codes = JSON.parse(data);
+                } catch (e) { /* ignore */ }
+
+                if (codes.length === 0) {
+                    container.innerHTML = '<div class="codes-empty">No hay códigos registrados aún.</div>';
+                    return;
+                }
+
+                // Sort by date desc
+                codes.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                let html = `
+                    <table class="codes-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Método</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                codes.forEach(entry => {
+                    const date = new Date(entry.date);
+                    const dateStr = date.toLocaleDateString('es-PE', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                    const methodClass = (entry.method || '').toLowerCase();
+                    const methodName = methodClass === 'yape' ? 'Yape' : methodClass === 'plin' ? 'Plin' : entry.method || '—';
+
+                    html += `
+                        <tr>
+                            <td><strong>${entry.code}</strong></td>
+                            <td><span class="method-badge ${methodClass}">${methodName}</span></td>
+                            <td>${dateStr}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button type="button" class="btn-clear-history" id="btn-clear-codes">🗑️ Limpiar Historial</button>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+
+                document.getElementById('btn-clear-codes').addEventListener('click', () => {
+                    if (confirm('¿Seguro que deseas borrar todo el historial de códigos? Esta acción no se puede deshacer.')) {
+                        localStorage.removeItem(USED_CODES_KEY);
+                        renderCodesHistory();
+                        showToast('🗑️ Historial de códigos eliminado.');
+                    }
+                });
+            }
+
+            renderCodesHistory();
+
+            // --- TOAST ---
+            function showToast(message) {
+                const existing = document.querySelector('.toast-notification');
+                if (existing) existing.remove();
+
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3500);
+            }
+        });
+    </script>
+</body>
+</html>
