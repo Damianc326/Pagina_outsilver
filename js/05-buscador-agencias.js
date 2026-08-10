@@ -5,6 +5,8 @@ const shalomFloatingSelector = document.getElementById('shalom-floating-selector
     const shalomSelectorResults = document.getElementById('shalom-selector-results');
     const selectedAgencyBadge = document.getElementById('selected-agency-badge');
     const selectedAgencyInfo = document.getElementById('selected-agency-info');
+    const btnOpenShalomSelector = document.getElementById('btn-open-shalom-selector');
+    const destinationInput = document.getElementById('buyer-destination');
 
     let highlightedIndex = -1;
     let filteredAgencies = [];

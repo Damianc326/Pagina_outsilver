@@ -257,8 +257,7 @@ const cartDrawer = document.getElementById('cart-drawer');
     const customAgencyGroup = document.getElementById('buyer-custom-agency-group');
     const customAgencyInput = document.getElementById('buyer-custom-agency');
     const shalomAgencyGroup = document.getElementById('shalom-agency-finder-group');
-    const btnOpenShalomSelector = document.getElementById('btn-open-shalom-selector');
-    const destinationInput = document.getElementById('buyer-destination');
+
 
     if (agencySelect) {
         agencySelect.addEventListener('change', (e) => {
