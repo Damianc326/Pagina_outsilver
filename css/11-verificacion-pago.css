@@ -1,5 +1,5 @@
 /* ============================================
-   11 — Modal de Verificación de Pago (Yape/Plin)
+   11 — Modal de Verificación de Pago (Yape)
    ============================================ */
 
 /* === OVERLAY === */
@@ -217,20 +217,14 @@
     opacity: 1;
 }
 
-.payment-method-card.plin-card::before {
-    background: linear-gradient(90deg, #00B140, #00D14F);
-    opacity: 1;
-}
+
 
 .payment-method-card:hover.yape-card {
     border-color: #6B2FA0;
     box-shadow: 0 12px 30px rgba(107, 47, 160, 0.15);
 }
 
-.payment-method-card:hover.plin-card {
-    border-color: #00B140;
-    box-shadow: 0 12px 30px rgba(0, 177, 64, 0.15);
-}
+
 
 .payment-method-card.selected.yape-card {
     border-color: #6B2FA0;
@@ -238,11 +232,7 @@
     box-shadow: 0 8px 25px rgba(107, 47, 160, 0.2);
 }
 
-.payment-method-card.selected.plin-card {
-    border-color: #00B140;
-    background: linear-gradient(135deg, #f0fff4 0%, #e6f8ed 100%);
-    box-shadow: 0 8px 25px rgba(0, 177, 64, 0.2);
-}
+
 
 .payment-method-logo {
     width: 72px;
@@ -262,10 +252,7 @@
     box-shadow: 0 6px 15px rgba(107, 47, 160, 0.3);
 }
 
-.plin-card .payment-method-logo {
-    background: linear-gradient(135deg, #00B140 0%, #00D14F 100%);
-    box-shadow: 0 6px 15px rgba(0, 177, 64, 0.3);
-}
+
 
 .payment-method-name {
     font-family: var(--font-headings, 'Outfit', sans-serif);
@@ -309,10 +296,7 @@
     color: white;
 }
 
-.payment-info-card.plin-theme {
-    background: linear-gradient(135deg, #00B140 0%, #00D14F 100%);
-    color: white;
-}
+
 
 .payment-info-card::after {
     content: '';

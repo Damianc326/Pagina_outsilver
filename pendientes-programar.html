@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendientes a Programar | Out Silver</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #1a1a1a;
+            --color-accent: #ff5000;
+            --color-bg: #f9f9f9;
+            --color-surface: #ffffff;
+            --color-border: #e0e0e0;
+            --color-text: #333333;
+            --color-text-muted: #666666;
+            --border-radius: 8px;
+            --color-confirmed: #00B140;
+            --color-shipped: #3498db;
+        }
+
+        * { box-sizing: border-box; }
+
+        .hidden { display: none !important; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 30px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-logo span {
+            color: var(--color-accent);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            width: 100%;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 15px 25px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--color-accent);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .page-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--color-primary);
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: var(--color-text-muted);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .connection-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .connection-status.connected {
+            background: #e8f8ef;
+            color: #00B140;
+        }
+
+        .connection-status.disconnected {
+            background: #fff4e5;
+            color: #b25e00;
+        }
+
+        .local-mode-note {
+            background: #fff4e5;
+            border: 1px solid #ffdca8;
+            border-radius: var(--border-radius);
+            padding: 14px 18px;
+            font-size: 0.88rem;
+            color: #7a4a00;
+            margin-bottom: 20px;
+        }
+
+        .local-mode-note a {
+            color: #7a4a00;
+            font-weight: 700;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            background: var(--color-surface);
+        }
+
+        .pending-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.86rem;
+            min-width: 900px;
+        }
+
+        .pending-table th {
+            background: #f5f5f5;
+            padding: 11px 14px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-muted);
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .pending-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .pending-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .pending-table tr:hover td {
+            background: #f9fafb;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.73rem;
+            font-weight: 700;
+            color: white;
+            background: var(--color-confirmed);
+        }
+
+        .btn-ship {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: var(--color-shipped);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: var(--border-radius);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-ship:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .btn-ship:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .empty-box {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-muted);
+        }
+
+        .empty-box .icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .loading-box {
+            text-align: center;
+            padding: 40px;
+            color: var(--color-text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <a href="index.html" class="sidebar-logo">OUT<span>SILVER</span></a>
+        <ul class="sidebar-menu">
+            <li><a href="admin.html">Panel de Administración</a></li>
+            <li><a href="editar.html">Editar Producto</a></li>
+            <li><a href="stock.html">Gestión de Stock</a></li>
+            <li><a href="metodo-pago.html">Método de Pago</a></li>
+            <li><a href="historial-pagos.html">Seguimiento de Pagos</a></li>
+            <li><a href="pendientes-programar.html" class="active">Pendientes a Programar</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-container">
+            <h1>🗓️ Pendientes a Programar</h1>
+            <p class="subtitle">Pedidos ya confirmados (pagados y verificados) que aún faltan programar para su envío.</p>
+
+            <div id="connection-status" class="connection-status">Cargando...</div>
+            <div id="local-mode-note" class="local-mode-note hidden"></div>
+
+            <div class="table-responsive" id="table-container">
+                <div class="loading-box">Cargando pedidos...</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const PAYMENT_CONFIG_KEY = 'outsilver_payment_config';
+        const USED_CODES_KEY = 'outsilver_used_codes';
+
+        const connectionStatus = document.getElementById('connection-status');
+        const localModeNote = document.getElementById('local-mode-note');
+        const tableContainer = document.getElementById('table-container');
+
+        let fromCloud = false;
+
+        function getGoogleScriptUrl() {
+            try {
+                const config = JSON.parse(localStorage.getItem(PAYMENT_CONFIG_KEY) || '{}');
+                return config.sheets_url || '';
+            } catch (e) { return ''; }
+        }
+
+        function parsePaymentDate(dateStr) {
+            if (!dateStr) return null;
+            const parts = String(dateStr).match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);
+            if (parts) {
+                return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+            }
+            return new Date(dateStr);
+        }
+
+        function formatDate(dateStr) {
+            const d = parsePaymentDate(dateStr);
+            if (!d || isNaN(d)) return dateStr || '—';
+            return d.toLocaleDateString('es-PE', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function isConfirmedNotShipped(status) {
+            const s = String(status || '').toLowerCase();
+            return s === 'confirmado' || s === 'aprobado' || s === 'completado';
+        }
+
+        async function loadPending() {
+            const sheetsUrl = getGoogleScriptUrl();
+            let codes = [];
+            fromCloud = false;
+
+            if (sheetsUrl) {
+                try {
+                    const response = await fetch(sheetsUrl);
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        codes = result.data.map(row => ({
+                            code: String(row['Código de Operación'] ?? ''),
+                            method: String(row['Método'] ?? 'Yape'),
+                            date: String(row['Fecha'] ?? ''),
+                            amount: String(row['Monto'] ?? ''),
+                            client: String(row['Cliente'] ?? ''),
+                            document: String(row['Documento'] ?? ''),
+                            products: String(row['Productos'] ?? ''),
+                            destination: String(row['Destino (Agencia)'] ?? ''),
+                            status: String(row['Estado'] ?? 'Pendiente')
+                        }));
+                        fromCloud = true;
+                        connectionStatus.textContent = '☁️ Sincronizado con Google Sheets';
+                        connectionStatus.className = 'connection-status connected';
+                    }
+                } catch (e) {
+                    console.warn('Error cargando desde Google Sheets:', e);
+                }
+            }
+
+            if (!fromCloud) {
+                try {
+                    const data = localStorage.getItem(USED_CODES_KEY);
+                    if (data) codes = JSON.parse(data);
+                } catch (e) { /* ignore */ }
+                connectionStatus.textContent = '💾 Datos locales';
+                connectionStatus.className = 'connection-status disconnected';
+                localModeNote.classList.remove('hidden');
+                localModeNote.innerHTML = 'Estás viendo datos guardados solo en este navegador. Para poder marcar pedidos como enviados desde aquí, configura la sincronización con Google Sheets en <a href="metodo-pago.html">Método de Pago</a>.';
+            } else {
+                localModeNote.classList.add('hidden');
+            }
+
+            const pending = codes.filter(p => isConfirmedNotShipped(p.status));
+            renderTable(pending);
+        }
+
+        function renderTable(payments) {
+            if (payments.length === 0) {
+                tableContainer.innerHTML = '<div class="empty-box"><div class="icon">🎉</div><p>No hay pedidos confirmados pendientes de programar en este momento.</p></div>';
+                return;
+            }
+
+            let html = '<table class="pending-table"><thead><tr>';
+            html += '<th>Código</th><th>Cliente</th><th>Productos</th><th>Destino / Agencia</th><th>Monto</th><th>Confirmado</th><th>Estado</th><th></th>';
+            html += '</tr></thead><tbody>';
+
+            payments.forEach(entry => {
+                html += '<tr>';
+                html += '<td><strong>' + (entry.code || '—') + '</strong></td>';
+                html += '<td>' + (entry.client || '—') + '</td>';
+                html += '<td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + (entry.products || '').replace(/"/g, '&quot;') + '">' + (entry.products || '—') + '</td>';
+                html += '<td>' + (entry.destination || '—') + '</td>';
+                html += '<td>' + (entry.amount || '—') + '</td>';
+                html += '<td style="font-size:0.8rem;">' + formatDate(entry.date) + '</td>';
+                html += '<td><span class="status-badge">Confirmado</span></td>';
+                html += '<td>' + (fromCloud
+                    ? '<button type="button" class="btn-ship" data-code="' + entry.code + '">🚚 Marcar Enviado</button>'
+                    : '') + '</td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            tableContainer.innerHTML = html;
+
+            tableContainer.querySelectorAll('.btn-ship').forEach(btn => {
+                btn.addEventListener('click', () => markAsShipped(btn.getAttribute('data-code'), btn));
+            });
+        }
+
+        async function markAsShipped(code, btn) {
+            const sheetsUrl = getGoogleScriptUrl();
+            if (!sheetsUrl) return;
+            if (!confirm('¿Marcar el pedido #' + code + ' como enviado?')) return;
+
+            btn.disabled = true;
+            btn.textContent = 'Actualizando...';
+
+            try {
+                const updateUrl = sheetsUrl + '?action=updateStatus&code=' + encodeURIComponent(code) + '&status=Enviado';
+                const response = await fetch(updateUrl);
+                const result = await response.json();
+                if (result.success) {
+                    await loadPending();
+                } else {
+                    alert('❌ ' + (result.error || 'Error al actualizar.'));
+                    btn.disabled = false;
+                    btn.textContent = '🚚 Marcar Enviado';
+                }
+            } catch (e) {
+                try {
+                    await fetch(sheetsUrl, {
+                        method: 'POST', mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'updateStatus', code: code, status: 'Enviado' })
+                    });
+                    setTimeout(loadPending, 1500);
+                } catch (err) {
+                    alert('❌ Error: ' + err.message);
+                    btn.disabled = false;
+                    btn.textContent = '🚚 Marcar Enviado';
+                }
+            }
+        }
+
+        loadPending();
+    });
+    </script>
+
+</body>
+</html>

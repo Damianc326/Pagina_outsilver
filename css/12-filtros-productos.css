@@ -1,0 +1,23 @@
+/* Estado activo de los filtros (aplicado por JS sobre el contenedor .filter-dropdown) */
+.filter-dropdown.active .filter-btn {
+    background-color: rgba(0, 61, 41, 0.08);
+    color: var(--color-primary);
+    border-color: var(--color-primary-light);
+}
+
+.filter-menu {
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+@media (max-width: 576px) {
+    .filter-menu {
+        left: 50%;
+        transform: translate(-50%, 8px);
+        min-width: 200px;
+    }
+
+    .filter-dropdown:hover .filter-menu {
+        transform: translate(-50%, 0);
+    }
+}

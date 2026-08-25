@@ -89,7 +89,4 @@ const heroShowcase = document.getElementById('main-hero-showcase');
 
 
 
-    initFilterListeners();
-    initSorting();
-    
     console.log('Interacciones de Out Silver cargadas con éxito.');

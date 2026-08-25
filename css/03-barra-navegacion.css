@@ -10,6 +10,11 @@
     top: 0;
     z-index: 1000;
     box-shadow: var(--shadow-soft);
+    transition: transform 0.3s ease-in-out;
+}
+
+.main-header.header-hidden {
+    transform: translateY(-100%);
 }
 
 .header-container {

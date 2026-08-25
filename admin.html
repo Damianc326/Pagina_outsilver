@@ -206,6 +206,8 @@
             <li><a href="editar.html">Editar Producto</a></li>
             <li><a href="stock.html">Gestión de Stock</a></li>
             <li><a href="metodo-pago.html">Método de Pago</a></li>
+            <li><a href="historial-pagos.html">Seguimiento de Pagos</a></li>
+            <li><a href="pendientes-programar.html">Pendientes a Programar</a></li>
         </ul>
     </aside>
 
@@ -376,7 +378,7 @@
                 const jsContent = `window.productosData = ${JSON.stringify(window.productosData, null, 4)};`;
 
                 try {
-                    // Pedir al usuario que seleccione el archivo a sobrescribir
+                    // 1. Guardar Base de Datos (productos-db.js)
                     const handle = await window.showSaveFilePicker({
                         suggestedName: 'productos-db.js',
                         types: [{
@@ -384,13 +386,26 @@
                             accept: {'text/javascript': ['.js']},
                         }],
                     });
-
-                    // Crear un "escritor" y guardar el contenido
                     const writable = await handle.createWritable();
                     await writable.write(jsContent);
                     await writable.close();
 
-                    alert('¡Producto agregado y guardado con éxito! Recarga tu tienda para verlo.');
+                    // 2. Guardar Imagen si existe
+                    if (imageFile) {
+                        alert('¡Base de datos guardada! Ahora, por favor, guarda la IMAGEN. Asegúrate de guardarla en la carpeta "images".');
+                        const imgHandle = await window.showSaveFilePicker({
+                            suggestedName: imageFile.name,
+                            types: [{
+                                description: 'Image File',
+                                accept: {'image/*': ['.png', '.jpg', '.jpeg', '.webp']},
+                            }],
+                        });
+                        const imgWritable = await imgHandle.createWritable();
+                        await imgWritable.write(imageFile);
+                        await imgWritable.close();
+                    }
+
+                    alert('¡Producto y foto agregados con éxito! Recarga tu tienda para verlo.');
                     document.getElementById('product-form').reset();
                     previewContainer.style.display = 'none';
                     previewImg.src = "";
@@ -399,7 +414,7 @@
                 } catch (error) {
                     if (error.name !== 'AbortError') {
                         console.error(error);
-                        alert('Hubo un error al guardar el archivo: ' + error.message);
+                        alert('Hubo un error al guardar: ' + error.message);
                     }
                 }
             });

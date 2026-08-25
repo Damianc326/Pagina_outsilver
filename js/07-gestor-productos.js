@@ -45,6 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
         div.setAttribute('data-colors', coloresHex);
         div.setAttribute('data-color-images', coloresImagenes);
         div.setAttribute('data-features', caracteristicas);
+        
+        if (producto.precios_por_talla) {
+            div.setAttribute('data-precios-talla', JSON.stringify(producto.precios_por_talla));
+        }
 
         div.innerHTML = `
             <div class="card-image-box">
@@ -55,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </svg>
                 </button>
                 <div class="vector-art-container">
-                    <img src="${producto.imagen_principal}" alt="${producto.titulo}" class="product-img-cover" onerror="this.src='images/placeholder.jpg'">
+                    <img src="${producto.imagen_principal}" alt="${producto.titulo}" class="product-img-cover" onerror="this.src='images/logo.png'">
                 </div>
             </div>
             <div class="card-details">
@@ -88,9 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
             gridContainer.appendChild(tarjeta);
         });
 
-        // Notificar a los otros scripts que los productos ya están en la página
-        document.dispatchEvent(new Event('productosCargados'));
-
         // Cargar scripts que dependen de que las tarjetas existan en el DOM de forma dinámica
         const scriptsDependientes = [
             "js/02-filtros-y-favoritos.js",
@@ -101,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scriptsDependientes.forEach(src => {
             const script = document.createElement('script');
             script.src = src;
+            script.async = false; // preserva el orden de ejecución (02 -> 03 -> 04)
             document.body.appendChild(script);
         });
     } else {

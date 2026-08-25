@@ -180,6 +180,95 @@
             </div>
         </section>
 
+        <section class="filters-section">
+            <div class="filters-container">
+                <div class="filter-group-left">
+                    <button type="button" class="filter-btn-all" id="btn-clear-filters-bar">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18" /><path d="M7 12h10" /><path d="M11 18h2" />
+                        </svg>
+                        <span>Limpiar Filtros</span>
+                    </button>
+
+                    <div class="filter-dropdown" id="filter-device-type">
+                        <button type="button" class="filter-btn">
+                            <span>Tipo de Prenda</span>
+                            <svg class="icon icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        </button>
+                        <div class="filter-menu">
+                            <label class="filter-option"><input type="checkbox" value="Polo"> Polo</label>
+                            <label class="filter-option"><input type="checkbox" value="Short"> Short</label>
+                            <label class="filter-option"><input type="checkbox" value="Pantalón"> Pantalón</label>
+                        </div>
+                    </div>
+
+                    <div class="filter-dropdown" id="filter-price">
+                        <button type="button" class="filter-btn">
+                            <span>Precio</span>
+                            <svg class="icon icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        </button>
+                        <div class="filter-menu">
+                            <label class="filter-option"><input type="radio" name="price-range" value="all" checked> Todos</label>
+                            <label class="filter-option"><input type="radio" name="price-range" value="under-150"> Menos de S/ 150</label>
+                            <label class="filter-option"><input type="radio" name="price-range" value="150-300"> S/ 150 – S/ 300</label>
+                            <label class="filter-option"><input type="radio" name="price-range" value="over-300"> Más de S/ 300</label>
+                        </div>
+                    </div>
+
+                    <div class="filter-dropdown" id="filter-review">
+                        <button type="button" class="filter-btn">
+                            <span>Calificación</span>
+                            <svg class="icon icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        </button>
+                        <div class="filter-menu">
+                            <label class="filter-option"><input type="radio" name="rating-filter" value="0" checked> Todas</label>
+                            <label class="filter-option"><input type="radio" name="rating-filter" value="4"> 4 estrellas o más</label>
+                            <label class="filter-option"><input type="radio" name="rating-filter" value="4.5"> 4.5 estrellas o más</label>
+                            <label class="filter-option"><input type="radio" name="rating-filter" value="5"> 5 estrellas</label>
+                        </div>
+                    </div>
+
+                    <div class="filter-dropdown" id="filter-material">
+                        <button type="button" class="filter-btn">
+                            <span>Material</span>
+                            <svg class="icon icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        </button>
+                        <div class="filter-menu">
+                            <label class="filter-option"><input type="checkbox" value="Algodón"> Algodón</label>
+                            <label class="filter-option"><input type="checkbox" value="Algodón Premium"> Algodón Premium</label>
+                            <label class="filter-option"><input type="checkbox" value="100% Algodón"> 100% Algodón</label>
+                        </div>
+                    </div>
+
+                    <div class="filter-dropdown" id="filter-offer">
+                        <button type="button" class="filter-btn">
+                            <span>Ofertas</span>
+                            <svg class="icon icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        </button>
+                        <div class="filter-menu">
+                            <label class="filter-option"><input type="checkbox" value="sale"> En oferta</label>
+                            <label class="filter-option"><input type="checkbox" value="nuevo"> Nuevo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sort-group-right">
+                    <div class="sort-selector-wrapper">
+                        <label class="sort-label" for="product-sort-select">Ordenar por</label>
+                        <div class="sort-select-custom">
+                            <select class="sort-select" id="product-sort-select">
+                                <option value="default">Relevancia</option>
+                                <option value="price-asc">Precio: menor a mayor</option>
+                                <option value="price-desc">Precio: mayor a menor</option>
+                                <option value="rating-desc">Mejor calificados</option>
+                            </select>
+                            <svg class="icon icon-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="products-grid-section" id="products-grid-section">
             <div class="products-grid-container">
                 <h2 class="grid-title" id="grid-header-title">¡Colecciones de Moda Para Ti!</h2>
@@ -456,8 +545,8 @@
                         <span id="cart-total-price">S/ 0.00</span>
                     </div>
                 </div>
-                <p class="cart-tax-note">Se aceptan pagos por Yape y Plin. Verificaremos tu comprobante.</p>
-                <button class="btn btn-primary btn-large" style="width: 100%;" id="checkout-btn">💳 Pagar con Yape / Plin</button>
+                <p class="cart-tax-note">Se aceptan pagos por Yape. Verificaremos tu comprobante.</p>
+                <button class="btn btn-primary btn-large" style="width: 100%;" id="checkout-btn">💳 Pagar con Yape</button>
             </div>
         </div>
     </div>
@@ -494,21 +583,14 @@
 
                 <!-- STEP 1: Method Selection -->
                 <div class="payment-step active" id="payment-step-1">
-                    <h3 class="payment-step-title">Selecciona tu método de pago</h3>
-                    <p class="payment-step-subtitle">Elige cómo realizaste o realizarás el pago de tu pedido.</p>
+                    <h3 class="payment-step-title">Método de pago</h3>
+                    <p class="payment-step-subtitle">Tu pago será procesado mediante Yape.</p>
                     <div class="payment-methods-grid">
-                        <div class="payment-method-card yape-card" data-method="yape">
+                        <div class="payment-method-card yape-card selected" data-method="yape">
                             <div class="payment-method-logo">Y</div>
                             <div>
                                 <div class="payment-method-name">Yape</div>
                                 <div class="payment-method-desc">Pago rápido y seguro</div>
-                            </div>
-                        </div>
-                        <div class="payment-method-card plin-card" data-method="plin">
-                            <div class="payment-method-logo">P</div>
-                            <div>
-                                <div class="payment-method-name">Plin</div>
-                                <div class="payment-method-desc">Transferencia inmediata</div>
                             </div>
                         </div>
                     </div>

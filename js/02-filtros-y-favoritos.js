@@ -18,7 +18,7 @@ const productCards = Array.from(document.querySelectorAll('.product-card'));
         "#eadecd": "Beige",
         "#3e5a7a": "Azul Acero",
         "#e2e8e4": "Gris Claro",
-        "#e7eee9": "Verde Menta",
+        "#e7eee9": "Cemento",
         "#b0b0b0": "Gris",
         "#8b5a2b": "Marrón",
         "#b22222": "Rojo",
@@ -31,7 +31,10 @@ const productCards = Array.from(document.querySelectorAll('.product-card'));
         "#1a5fb4": "Azul",
         "#76e5c1": "Cemento",
         "#ffd54f": "Amarillo",
-        "#a3e12c": "Verde Olivo"
+        "#a3e12c": "Verde Olivo",
+        "#6cd4af": "Cemento",
+        "#a1d62e": "Verde Limón",
+        "#74b992": "Verde Olivo"
     };
 
     const activeFilters = {
@@ -66,6 +69,18 @@ const productCards = Array.from(document.querySelectorAll('.product-card'));
                 showToast(`"${title}" eliminado de la lista de deseos.`);
             }
         });
+
+        const addToCartBtn = card.querySelector('.add-to-cart-btn');
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const title = card.querySelector('.product-title').textContent;
+                const price = parseFloat(card.getAttribute('data-price'));
+                const img = card.querySelector('.vector-art-container').innerHTML;
+                addToCart(title, price, 1, img);
+                showToast(`¡"${title}" añadido al carrito!`);
+            });
+        }
     });
 
     function addToCart(title, price, qty, img, size = 'Única', color = 'Único') {
@@ -175,6 +190,11 @@ const productCards = Array.from(document.querySelectorAll('.product-card'));
 
         if (resetFiltersBtn) {
             resetFiltersBtn.addEventListener('click', resetAllFilters);
+        }
+
+        const clearFiltersBarBtn = document.getElementById('btn-clear-filters-bar');
+        if (clearFiltersBarBtn) {
+            clearFiltersBarBtn.addEventListener('click', resetAllFilters);
         }
     }
 
@@ -343,3 +363,6 @@ const productCards = Array.from(document.querySelectorAll('.product-card'));
 
         showToast('Productos reordenados.');
     }
+
+    initFilterListeners();
+    initSorting();

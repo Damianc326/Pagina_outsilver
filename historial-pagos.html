@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Pagos | Out Silver</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #1a1a1a;
+            --color-accent: #ff5000;
+            --color-bg: #f9f9f9;
+            --color-surface: #ffffff;
+            --color-border: #e0e0e0;
+            --color-text: #333333;
+            --color-text-muted: #666666;
+            --border-radius: 8px;
+            --color-yape: #6B2FA0;
+            --color-plin: #00B140;
+            --color-pending: #ff8800;
+            --color-confirmed: #00B140;
+            --color-rejected: #e74c3c;
+            --color-shipped: #3498db;
+            --color-delivered: #1a1a1a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 250px;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 30px;
+            flex-shrink: 0;
+        }
+        .sidebar-logo {
+            font-size: 1.5rem; font-weight: 700; text-align: center;
+            margin-bottom: 40px; color: white; text-decoration: none; letter-spacing: 1px;
+        }
+        .sidebar-logo span { color: var(--color-accent); }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+        .sidebar-menu li { width: 100%; position: relative; }
+        .sidebar-menu a {
+            display: block; padding: 15px 25px; color: rgba(255,255,255,0.7);
+            text-decoration: none; font-size: 1rem; font-weight: 500;
+            border-left: 4px solid transparent; transition: all 0.3s ease;
+        }
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: rgba(255,255,255,0.1); color: white;
+            border-left-color: var(--color-accent);
+        }
+        /* Notification Badge */
+        .nav-badge {
+            position: absolute; top: 12px; right: 18px;
+            background: var(--color-accent); color: white;
+            font-size: 0.68rem; font-weight: 800; min-width: 20px; height: 20px;
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            padding: 0 5px; animation: badgePulse 2s infinite;
+        }
+        .nav-badge.hidden { display: none; }
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content { flex: 1; overflow-y: auto; padding: 40px; }
+        .admin-container {
+            max-width: 1200px; margin: 0 auto;
+            background-color: var(--color-surface); padding: 40px;
+            border-radius: var(--border-radius); box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: var(--color-primary); font-size: 1.8rem; margin-top: 0; margin-bottom: 5px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .subtitle { color: var(--color-text-muted); margin-bottom: 30px; font-size: 0.95rem; }
+
+        /* ===== SUMMARY CARDS ===== */
+        .summary-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-bottom: 25px;
+        }
+        .summary-card {
+            background: var(--color-bg); border: 1px solid var(--color-border);
+            border-radius: 12px; padding: 18px; display: flex; flex-direction: column;
+            gap: 4px; position: relative; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s;
+        }
+        .summary-card:hover { transform: translateY(-2px); }
+        .summary-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        }
+        .summary-card.total::before { background: var(--color-primary); }
+        .summary-card.pending::before { background: var(--color-pending); }
+        .summary-card.confirmed::before { background: var(--color-confirmed); }
+        .summary-card.revenue::before { background: var(--color-yape); }
+        .summary-card .card-title {
+            font-size: 0.78rem; color: var(--color-text-muted); font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .summary-card .card-value { font-size: 1.7rem; font-weight: 700; color: var(--color-primary); }
+
+        /* ===== LINE CHART ===== */
+        .chart-container {
+            background: var(--color-bg); border: 1px solid var(--color-border);
+            border-radius: 12px; padding: 20px; margin-bottom: 25px;
+            position: relative; overflow: hidden;
+        }
+        .chart-container::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 4px; background: linear-gradient(90deg, var(--color-accent), var(--color-yape));
+        }
+        .chart-title {
+            font-size: 0.9rem; font-weight: 700; color: var(--color-primary);
+            margin-bottom: 15px; display: flex; align-items: center; gap: 8px;
+        }
+        .chart-area {
+            width: 100%; height: 180px; position: relative;
+        }
+        .chart-svg { width: 100%; height: 100%; }
+        .chart-tooltip {
+            position: absolute; background: var(--color-primary); color: white;
+            padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;
+            pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 10;
+            white-space: nowrap;
+        }
+        .chart-labels {
+            display: flex; justify-content: space-between; margin-top: 8px;
+            padding: 0 10px;
+        }
+        .chart-label {
+            font-size: 0.72rem; color: var(--color-text-muted); font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* ===== TOOLBAR ===== */
+        .toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; flex-wrap: wrap; gap: 10px;
+        }
+        .toolbar-left { display: flex; gap: 10px; align-items: center; }
+        .cloud-label { font-size: 0.85rem; }
+        .cloud-label.connected { color: var(--color-confirmed); font-weight: 600; }
+        .cloud-label.disconnected { color: var(--color-pending); font-weight: 600; }
+
+        /* ===== FILTERS ===== */
+        .filters-bar {
+            background-color: #fafafa; border: 1px solid var(--color-border);
+            border-radius: 8px; padding: 15px; margin-bottom: 20px;
+            display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+        }
+        .filter-group {
+            flex: 1; min-width: 170px; display: flex; flex-direction: column; gap: 5px;
+        }
+        .filter-group.small { flex: 0 0 160px; min-width: 140px; }
+        .filter-group.date { flex: 0 0 150px; min-width: 130px; }
+        label {
+            font-weight: 600; font-size: 0.75rem; color: var(--color-text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        input, select {
+            padding: 9px 12px; border: 1px solid var(--color-border);
+            border-radius: var(--border-radius); font-family: inherit; font-size: 0.88rem;
+            outline: none; transition: border-color 0.2s; background: white;
+        }
+        input:focus, select:focus { border-color: var(--color-accent); }
+
+        /* ===== TABLE ===== */
+        .table-responsive {
+            overflow-x: auto; border: 1px solid var(--color-border);
+            border-radius: 8px; background: white;
+        }
+        .codes-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 850px; }
+        .codes-table th {
+            background: #f5f5f5; padding: 11px 14px; text-align: left;
+            font-weight: 700; font-size: 0.75rem; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--color-text-muted);
+            border-bottom: 2px solid var(--color-border);
+        }
+        .codes-table td {
+            padding: 12px 14px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;
+        }
+        .codes-table tr { cursor: pointer; transition: background 0.15s; }
+        .codes-table tr:hover td { background: #f5f7fa; }
+        .codes-empty { text-align: center; padding: 40px; color: var(--color-text-muted); font-size: 0.95rem; }
+
+        .method-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            font-size: 0.73rem; font-weight: 700; color: white; text-align: center;
+        }
+        .note-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 50%; background: #fff3cd;
+            font-size: 0.7rem; margin-left: 6px; cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .note-icon:hover { transform: scale(1.2); }
+
+        /* ===== PAGINATION ===== */
+        .pagination-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 16px; flex-wrap: wrap; gap: 10px;
+        }
+        .pagination-info { font-size: 0.82rem; color: var(--color-text-muted); font-weight: 500; }
+        .pagination-controls { display: flex; align-items: center; gap: 8px; }
+        .pagination-controls select {
+            padding: 6px 10px; font-size: 0.82rem;
+        }
+        .page-btn {
+            background: white; border: 1px solid var(--color-border);
+            border-radius: 6px; padding: 6px 14px; font-size: 0.82rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;
+        }
+        .page-btn:hover:not(:disabled) {
+            background: var(--color-primary); color: white; border-color: var(--color-primary);
+        }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .page-btn.active {
+            background: var(--color-primary); color: white; border-color: var(--color-primary);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            background-color: var(--color-primary); color: white; border: none;
+            padding: 9px 16px; border-radius: var(--border-radius); font-size: 0.85rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn-primary { background-color: var(--color-accent); }
+        .btn-primary:hover { background-color: #e64800; box-shadow: 0 4px 8px rgba(255,80,0,0.2); }
+        .btn-export {
+            background: white; color: var(--color-text); border: 1px solid var(--color-border);
+            font-size: 0.8rem; padding: 7px 14px;
+        }
+        .btn-export:hover { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+
+        .btn-action {
+            display: inline-flex; align-items: center; justify-content: center;
+            border: none; border-radius: 4px; font-size: 0.7rem; font-weight: 700;
+            cursor: pointer; padding: 3px 7px; transition: all 0.2s ease;
+        }
+        .btn-action:hover { opacity: 0.85; transform: translateY(-1px); }
+        .btn-action.approve { background: #e8f8ef; color: #27ae60; border: 1px solid #27ae60; }
+        .btn-action.reject { background: #fde8e8; color: #e74c3c; border: 1px solid #e74c3c; }
+
+        /* ===== MODAL OVERLAY ===== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            z-index: 9000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0) scale(1); opacity: 1;
+        }
+        .modal-content {
+            background: white; border-radius: 16px; width: 90%; max-width: 600px;
+            max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transform: translateY(20px) scale(0.97); opacity: 0;
+            transition: all 0.3s ease; position: relative;
+        }
+        .modal-header {
+            padding: 24px 28px 0; display: flex; justify-content: space-between;
+            align-items: flex-start;
+        }
+        .modal-header h2 { margin: 0; font-size: 1.3rem; color: var(--color-primary); }
+        .modal-close {
+            background: none; border: none; font-size: 1.5rem; cursor: pointer;
+            color: var(--color-text-muted); padding: 0; line-height: 1;
+            transition: color 0.2s;
+        }
+        .modal-close:hover { color: var(--color-primary); }
+        .modal-body { padding: 20px 28px 28px; }
+
+        /* Detail grid */
+        .detail-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+            margin-bottom: 20px;
+        }
+        .detail-item { display: flex; flex-direction: column; gap: 3px; }
+        .detail-item.full { grid-column: 1 / -1; }
+        .detail-label {
+            font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .detail-value { font-size: 0.92rem; font-weight: 500; color: var(--color-primary); }
+        .detail-value .method-badge { font-size: 0.78rem; }
+        .receipt-image {
+            display: block; max-width: 100%; max-height: 340px; width: auto;
+            object-fit: contain; border-radius: 10px; border: 1px solid var(--color-border);
+            margin-top: 4px; cursor: zoom-in; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        /* Timeline stepper */
+        .timeline-section { margin: 20px 0; }
+        .timeline-section h4 {
+            font-size: 0.82rem; font-weight: 700; color: var(--color-text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px;
+        }
+        .timeline-stepper {
+            display: flex; align-items: center; justify-content: space-between;
+            position: relative; padding: 0 5px;
+        }
+        .timeline-stepper::before {
+            content: ''; position: absolute; top: 16px; left: 20px; right: 20px;
+            height: 3px; background: #e0e0e0; z-index: 0;
+        }
+        .timeline-step {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            z-index: 1; position: relative; cursor: pointer;
+        }
+        .step-dot {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: #e0e0e0; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 800; color: white;
+            transition: all 0.3s ease; border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .step-label {
+            font-size: 0.68rem; font-weight: 600; color: var(--color-text-muted);
+            text-align: center; max-width: 70px;
+        }
+        .timeline-step.active .step-dot { background: var(--color-accent); transform: scale(1.15); }
+        .timeline-step.active .step-label { color: var(--color-accent); font-weight: 700; }
+        .timeline-step.completed .step-dot { background: var(--color-confirmed); }
+        .timeline-step.completed .step-label { color: var(--color-confirmed); }
+        .timeline-progress {
+            position: absolute; top: 16px; left: 20px; height: 3px;
+            background: var(--color-confirmed); z-index: 0; transition: width 0.5s ease;
+        }
+
+        /* Notes */
+        .notes-section { margin-top: 20px; }
+        .notes-section h4 {
+            font-size: 0.82rem; font-weight: 700; color: var(--color-text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px;
+        }
+        .notes-textarea {
+            width: 100%; min-height: 70px; padding: 10px 14px;
+            border: 1px solid var(--color-border); border-radius: 8px;
+            font-family: inherit; font-size: 0.88rem; resize: vertical;
+            outline: none; transition: border-color 0.2s;
+        }
+        .notes-textarea:focus { border-color: var(--color-accent); }
+        .notes-save {
+            margin-top: 8px; background: var(--color-primary); color: white;
+            border: none; padding: 7px 16px; border-radius: 6px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s;
+        }
+        .notes-save:hover { background: var(--color-accent); }
+
+        /* Modal actions */
+        .modal-actions {
+            display: flex; gap: 8px; margin-top: 20px; padding-top: 16px;
+            border-top: 1px solid var(--color-border); flex-wrap: wrap;
+        }
+        .modal-actions .btn { font-size: 0.82rem; padding: 8px 16px; }
+
+        /* ===== TOAST ===== */
+        .toast-notification {
+            position: fixed; bottom: 30px; right: 30px; background: var(--color-primary);
+            color: white; padding: 14px 24px; border-radius: 10px; font-weight: 600;
+            font-size: 0.95rem; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 9999; animation: toastIn 0.3s ease; transition: opacity 0.3s;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            body { display: block; height: auto; overflow: visible; }
+            .sidebar, .toolbar, .filters-bar, .pagination-bar, .chart-container,
+            .btn-action, .modal-overlay, .nav-badge, .note-icon { display: none !important; }
+            .main-content { padding: 0; overflow: visible; }
+            .admin-container { box-shadow: none; padding: 20px; max-width: 100%; }
+            .codes-table { min-width: auto; font-size: 0.8rem; }
+            .codes-table th, .codes-table td { padding: 8px 10px; }
+            .table-responsive { border: 1px solid #ccc; }
+            .summary-grid { grid-template-columns: repeat(4, 1fr); }
+            @page { margin: 1cm; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <a href="index.html" class="sidebar-logo">OUT<span>SILVER</span></a>
+        <ul class="sidebar-menu">
+            <li><a href="admin.html">Panel de Administración</a></li>
+            <li><a href="editar.html">Editar Producto</a></li>
+            <li><a href="stock.html">Gestión de Stock</a></li>
+            <li><a href="metodo-pago.html">Método de Pago</a></li>
+            <li>
+                <a href="historial-pagos.html" class="active">Seguimiento de Pagos</a>
+                <span class="nav-badge hidden" id="nav-badge">0</span>
+            </li>
+            <li><a href="pendientes-programar.html">Pendientes a Programar</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="admin-container">
+            <h1>📋 Seguimiento de Pagos</h1>
+            <p class="subtitle">Gestiona, filtra y verifica los pagos registrados. Haz clic en un pago para ver su detalle completo.</p>
+
+            <!-- Summary Cards -->
+            <div class="summary-grid">
+                <div class="summary-card total">
+                    <span class="card-title">Transacciones</span>
+                    <span class="card-value" id="stat-total-tx">0</span>
+                </div>
+                <div class="summary-card pending">
+                    <span class="card-title">Por Verificar</span>
+                    <span class="card-value" id="stat-pending">0</span>
+                </div>
+                <div class="summary-card confirmed">
+                    <span class="card-title">Confirmados</span>
+                    <span class="card-value" id="stat-confirmed">0</span>
+                </div>
+                <div class="summary-card revenue">
+                    <span class="card-title">Monto Total</span>
+                    <span class="card-value" id="stat-revenue">S/ 0.00</span>
+                </div>
+            </div>
+
+            <!-- Line Chart -->
+            <div class="chart-container">
+                <div class="chart-title">📈 Ventas — Últimos 7 días</div>
+                <div class="chart-area" id="chart-area">
+                    <svg class="chart-svg" id="chart-svg" viewBox="0 0 700 180" preserveAspectRatio="none"></svg>
+                    <div class="chart-tooltip" id="chart-tooltip"></div>
+                </div>
+                <div class="chart-labels" id="chart-labels"></div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div id="connection-status" class="cloud-label disconnected">Cargando...</div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-export" id="btn-export-csv">📥 CSV</button>
+                    <button type="button" class="btn btn-export" id="btn-export-pdf">🖨️ PDF</button>
+                    <button type="button" class="btn btn-primary" id="btn-refresh-history">🔄 Actualizar</button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-bar">
+                <div class="filter-group">
+                    <label for="search-client">Buscar Cliente / Código / Producto</label>
+                    <input type="text" id="search-client" placeholder="Ej: Daniel, 21068971, Polo...">
+                </div>
+                <div class="filter-group small">
+                    <label for="filter-status">Estado</label>
+                    <select id="filter-status">
+                        <option value="todos">Todos</option>
+                        <option value="pendiente">Pendientes</option>
+                        <option value="confirmado">Confirmados</option>
+                        <option value="enviado">Enviados</option>
+                        <option value="entregado">Entregados</option>
+                        <option value="rechazado">Rechazados</option>
+                    </select>
+                </div>
+                <div class="filter-group small">
+                    <label for="filter-method">Método</label>
+                    <select id="filter-method">
+                        <option value="todos">Todos</option>
+                        <option value="yape">Yape</option>
+                        <option value="plin">Plin</option>
+                    </select>
+                </div>
+                <div class="filter-group date">
+                    <label for="filter-date-from">Desde</label>
+                    <input type="date" id="filter-date-from">
+                </div>
+                <div class="filter-group date">
+                    <label for="filter-date-to">Hasta</label>
+                    <input type="date" id="filter-date-to">
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive" id="table-container">
+                <div class="codes-empty">Cargando pagos...</div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-bar" id="pagination-bar">
+                <div class="pagination-info" id="pagination-info"></div>
+                <div class="pagination-controls">
+                    <select id="page-size">
+                        <option value="10">10 por pág.</option>
+                        <option value="25" selected>25 por pág.</option>
+                        <option value="50">50 por pág.</option>
+                    </select>
+                    <button class="page-btn" id="page-prev">← Anterior</button>
+                    <span id="page-numbers"></span>
+                    <button class="page-btn" id="page-next">Siguiente →</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detail-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-detail-title">Detalle del Pago</h2>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid" id="modal-detail-grid"></div>
+
+                <!-- Timeline -->
+                <div class="timeline-section">
+                    <h4>📊 Timeline de Estado</h4>
+                    <div class="timeline-stepper" id="timeline-stepper">
+                        <div class="timeline-progress" id="timeline-progress"></div>
+                        <div class="timeline-step" data-status="Pendiente">
+                            <div class="step-dot">1</div>
+                            <span class="step-label">Pendiente</span>
+                        </div>
+                        <div class="timeline-step" data-status="Confirmado">
+                            <div class="step-dot">2</div>
+                            <span class="step-label">Confirmado</span>
+                        </div>
+                        <div class="timeline-step" data-status="Enviado">
+                            <div class="step-dot">3</div>
+                            <span class="step-label">Enviado</span>
+                        </div>
+                        <div class="timeline-step" data-status="Entregado">
+                            <div class="step-dot">4</div>
+                            <span class="step-label">Entregado</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="notes-section">
+                    <h4>📝 Notas Internas</h4>
+                    <textarea class="notes-textarea" id="modal-notes" placeholder="Escribe una nota sobre este pago..."></textarea>
+                    <button type="button" class="notes-save" id="btn-save-note">💾 Guardar Nota</button>
+                </div>
+
+                <!-- Actions -->
+                <div class="modal-actions" id="modal-actions"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // ===== CONSTANTS =====
+        const PAYMENT_CONFIG_KEY = 'outsilver_payment_config';
+        const USED_CODES_KEY = 'outsilver_used_codes';
+        const NOTES_KEY = 'outsilver_payment_notes';
+        const STATUS_ORDER = ['Pendiente', 'Confirmado', 'Enviado', 'Entregado'];
+        const STATUS_COLORS = {
+            'pendiente': '#ff8800',
+            'confirmado': '#00B140',
+            'aprobado': '#00B140',
+            'completado': '#00B140',
+            'enviado': '#3498db',
+            'entregado': '#1a1a1a',
+            'rechazado': '#e74c3c'
+        };
+
+        // ===== DOM =====
+        const tableContainer = document.getElementById('table-container');
+        const connectionStatus = document.getElementById('connection-status');
+        const btnRefresh = document.getElementById('btn-refresh-history');
+        const btnExportCsv = document.getElementById('btn-export-csv');
+        const btnExportPdf = document.getElementById('btn-export-pdf');
+        const searchInput = document.getElementById('search-client');
+        const statusSelect = document.getElementById('filter-status');
+        const methodSelect = document.getElementById('filter-method');
+        const dateFrom = document.getElementById('filter-date-from');
+        const dateTo = document.getElementById('filter-date-to');
+        const pageSizeSelect = document.getElementById('page-size');
+        const pageInfo = document.getElementById('pagination-info');
+        const pageNumbers = document.getElementById('page-numbers');
+        const pagePrev = document.getElementById('page-prev');
+        const pageNext = document.getElementById('page-next');
+        const navBadge = document.getElementById('nav-badge');
+        const statTotalTx = document.getElementById('stat-total-tx');
+        const statPending = document.getElementById('stat-pending');
+        const statConfirmed = document.getElementById('stat-confirmed');
+        const statRevenue = document.getElementById('stat-revenue');
+
+        // Modal
+        const modalOverlay = document.getElementById('detail-modal');
+        const modalClose = document.getElementById('modal-close');
+        const modalDetailGrid = document.getElementById('modal-detail-grid');
+        const modalActions = document.getElementById('modal-actions');
+        const modalNotes = document.getElementById('modal-notes');
+        const btnSaveNote = document.getElementById('btn-save-note');
+        const timelineStepper = document.getElementById('timeline-stepper');
+        const timelineProgress = document.getElementById('timeline-progress');
+
+        // State
+        let allPayments = [];
+        let filteredPayments = [];
+        let fromCloud = false;
+        let currentPage = 1;
+        let currentModalCode = null;
+
+        // ===== HELPERS =====
+        function getGoogleScriptUrl() {
+            try {
+                const config = JSON.parse(localStorage.getItem(PAYMENT_CONFIG_KEY) || '{}');
+                return config.sheets_url || '';
+            } catch (e) { return ''; }
+        }
+
+        function getNotes() {
+            try { return JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); } catch(e) { return {}; }
+        }
+        function saveNote(code, text) {
+            const notes = getNotes();
+            if (text.trim()) { notes[code] = text.trim(); } else { delete notes[code]; }
+            localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+        }
+
+        function parsePaymentDate(dateStr) {
+            if (!dateStr) return null;
+            // Handle "dd/MM/yyyy HH:mm:ss" format from Google Sheets
+            const parts = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);
+            if (parts) {
+                return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+            }
+            return new Date(dateStr);
+        }
+
+        function formatDate(dateStr) {
+            const d = parsePaymentDate(dateStr);
+            if (!d || isNaN(d)) return dateStr || '—';
+            return d.toLocaleDateString('es-PE', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function getStatusInfo(status) {
+            const s = (status || 'pendiente').toLowerCase();
+            const isConfirmed = s === 'confirmado' || s === 'aprobado' || s === 'completado';
+            const isRejected = s === 'rechazado';
+            const isShipped = s === 'enviado';
+            const isDelivered = s === 'entregado';
+            const color = STATUS_COLORS[s] || '#ff8800';
+            let displayStatus = status || 'Pendiente';
+            if (isConfirmed) displayStatus = 'Confirmado';
+            return { isConfirmed, isRejected, isShipped, isDelivered, color, displayStatus, raw: s };
+        }
+
+        function getStatusIndex(status) {
+            const s = (status || 'pendiente').toLowerCase();
+            if (s === 'rechazado') return -1;
+            if (s === 'confirmado' || s === 'aprobado' || s === 'completado') return 1;
+            if (s === 'enviado') return 2;
+            if (s === 'entregado') return 3;
+            return 0;
+        }
+
+        // ===== LOAD PAYMENTS =====
+        async function loadPayments() {
+            const sheetsUrl = getGoogleScriptUrl();
+            let codes = [];
+            fromCloud = false;
+
+            if (sheetsUrl) {
+                try {
+                    const response = await fetch(sheetsUrl);
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        codes = result.data.map(row => ({
+                            code: String(row['Código de Operación'] ?? ''),
+                            method: String(row['Método'] ?? 'Yape'),
+                            date: String(row['Fecha'] ?? ''),
+                            amount: String(row['Monto'] ?? ''),
+                            client: String(row['Cliente'] ?? ''),
+                            document: String(row['Documento'] ?? ''),
+                            products: String(row['Productos'] ?? ''),
+                            destination: String(row['Destino (Agencia)'] ?? ''),
+                            status: String(row['Estado'] ?? 'Pendiente'),
+                            imageUrl: String(row['Imagen'] ?? '')
+                        }));
+
+                        // Fallback a localStorage para las imágenes (por si Google Sheets no las guardó correctamente aún)
+                        try {
+                            const localData = localStorage.getItem(USED_CODES_KEY);
+                            if (localData) {
+                                const localCodes = JSON.parse(localData);
+                                codes.forEach(cloudCode => {
+                                    if (!cloudCode.imageUrl || cloudCode.imageUrl.trim() === '') {
+                                        const match = localCodes.find(lc => lc.code === cloudCode.code);
+                                        if (match && match.imageUrl) {
+                                            cloudCode.imageUrl = match.imageUrl;
+                                        }
+                                    }
+                                });
+                            }
+                        } catch(e) { console.warn('Error leyendo imágenes locales:', e); }
+
+                        fromCloud = true;
+                        connectionStatus.innerHTML = '☁️ Sincronizado con Google Sheets';
+                        connectionStatus.className = 'cloud-label connected';
+                    }
+                } catch (e) {
+                    console.warn('Error cargando desde Google Sheets:', e);
+                }
+            }
+
+            if (!fromCloud) {
+                try {
+                    const data = localStorage.getItem(USED_CODES_KEY);
+                    if (data) codes = JSON.parse(data);
+                } catch (e) { /* ignore */ }
+                connectionStatus.innerHTML = '💾 Datos locales';
+                connectionStatus.className = 'cloud-label disconnected';
+            }
+
+            // Sort newest first
+            if (fromCloud) {
+                codes.reverse();
+            } else {
+                codes.sort((a, b) => new Date(b.date) - new Date(a.date));
+            }
+
+            allPayments = codes;
+            updateStats(codes);
+            updateNotificationBadge(codes);
+            renderChart(codes);
+            applyFilters();
+        }
+
+        // ===== STATS =====
+        function updateStats(payments) {
+            let total = payments.length, pending = 0, confirmed = 0, revenue = 0;
+            payments.forEach(p => {
+                const info = getStatusInfo(p.status);
+                if (info.isConfirmed || info.isShipped || info.isDelivered) confirmed++;
+                else if (!info.isRejected) pending++;
+                if (p.amount) {
+                    revenue += parseFloat(String(p.amount).replace(/[^0-9.]/g, '')) || 0;
+                }
+            });
+            statTotalTx.textContent = total;
+            statPending.textContent = pending;
+            statConfirmed.textContent = confirmed;
+            statRevenue.textContent = 'S/ ' + revenue.toFixed(2);
+        }
+
+        // ===== NOTIFICATION BADGE =====
+        function updateNotificationBadge(payments) {
+            const pendingCount = payments.filter(p => {
+                const s = (p.status || 'pendiente').toLowerCase();
+                return s === 'pendiente';
+            }).length;
+
+            if (pendingCount > 0) {
+                navBadge.textContent = pendingCount;
+                navBadge.classList.remove('hidden');
+            } else {
+                navBadge.classList.add('hidden');
+            }
+        }
+
+        // ===== LINE CHART =====
+        function renderChart(payments) {
+            const svg = document.getElementById('chart-svg');
+            const labelsContainer = document.getElementById('chart-labels');
+            const tooltip = document.getElementById('chart-tooltip');
+            const chartArea = document.getElementById('chart-area');
+
+            const today = new Date();
+            today.setHours(23, 59, 59, 999);
+            const days = [];
+            const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                d.setHours(0, 0, 0, 0);
+                days.push({
+                    date: d,
+                    label: dayNames[d.getDay()],
+                    fullLabel: d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' }),
+                    total: 0,
+                    count: 0
+                });
+            }
+
+            payments.forEach(p => {
+                if (!p.amount || !p.date) return;
+                const pDate = parsePaymentDate(p.date);
+                if (!pDate || isNaN(pDate)) return;
+                pDate.setHours(0, 0, 0, 0);
+
+                for (const day of days) {
+                    if (pDate.getTime() === day.date.getTime()) {
+                        day.total += parseFloat(String(p.amount).replace(/[^0-9.]/g, '')) || 0;
+                        day.count++;
+                        break;
+                    }
+                }
+            });
+
+            const maxVal = Math.max(...days.map(d => d.total), 1);
+            const W = 700, H = 180;
+            const padX = 30, padY = 20;
+            const usableW = W - padX * 2;
+            const usableH = H - padY * 2;
+
+            const points = days.map((d, i) => ({
+                x: padX + (i / 6) * usableW,
+                y: padY + usableH - (d.total / maxVal) * usableH,
+                data: d
+            }));
+
+            const linePoints = points.map(p => p.x + ',' + p.y).join(' ');
+            const areaPoints = padX + ',' + (padY + usableH) + ' ' + linePoints + ' ' + (padX + usableW) + ',' + (padY + usableH);
+
+            let svgContent = '';
+            svgContent += '<defs><linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">';
+            svgContent += '<stop offset="0%" stop-color="#ff5000" stop-opacity="0.4"/>';
+            svgContent += '<stop offset="100%" stop-color="#ff5000" stop-opacity="0.02"/>';
+            svgContent += '</linearGradient></defs>';
+            // Grid lines
+            svgContent += '<line x1="'+padX+'" y1="'+padY+'" x2="'+padX+'" y2="'+(padY+usableH)+'" stroke="#e0e0e0" stroke-width="1"/>';
+            svgContent += '<line x1="'+padX+'" y1="'+(padY+usableH)+'" x2="'+(padX+usableW)+'" y2="'+(padY+usableH)+'" stroke="#e0e0e0" stroke-width="1"/>';
+            svgContent += '<line x1="'+padX+'" y1="'+padY+'" x2="'+(padX+usableW)+'" y2="'+padY+'" stroke="#f0f0f0" stroke-width="1" stroke-dasharray="4"/>';
+            svgContent += '<line x1="'+padX+'" y1="'+(padY+usableH/2)+'" x2="'+(padX+usableW)+'" y2="'+(padY+usableH/2)+'" stroke="#f0f0f0" stroke-width="1" stroke-dasharray="4"/>';
+            // Area fill
+            svgContent += '<polygon points="'+areaPoints+'" fill="url(#gradient)" opacity="0.3"/>';
+            // Line
+            svgContent += '<polyline points="'+linePoints+'" fill="none" stroke="#ff5000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+            // Data dots
+            points.forEach((p, i) => {
+                svgContent += '<circle cx="'+p.x+'" cy="'+p.y+'" r="5" fill="white" stroke="#ff5000" stroke-width="2.5" data-index="'+i+'" class="chart-dot" style="cursor:pointer;"/>';
+            });
+
+            svg.innerHTML = svgContent;
+
+            labelsContainer.innerHTML = days.map(d =>
+                '<span class="chart-label">' + d.label + '<br>' + d.fullLabel + '</span>'
+            ).join('');
+
+            // Tooltip events
+            svg.querySelectorAll('.chart-dot').forEach(dot => {
+                dot.addEventListener('mouseenter', function() {
+                    const idx = parseInt(this.getAttribute('data-index'));
+                    const d = days[idx];
+                    tooltip.textContent = 'S/ ' + d.total.toFixed(2) + ' (' + d.count + ' pagos)';
+                    const rect = chartArea.getBoundingClientRect();
+                    const dotRect = this.getBoundingClientRect();
+                    tooltip.style.left = (dotRect.left - rect.left - 30) + 'px';
+                    tooltip.style.top = (dotRect.top - rect.top - 35) + 'px';
+                    tooltip.style.opacity = '1';
+                });
+                dot.addEventListener('mouseleave', function() {
+                    tooltip.style.opacity = '0';
+                });
+            });
+        }
+
+        // ===== FILTERS =====
+        function applyFilters() {
+            const searchVal = searchInput.value.toLowerCase().trim();
+            const statusVal = statusSelect.value;
+            const methodVal = methodSelect.value;
+            const fromDateVal = dateFrom.value ? new Date(dateFrom.value + 'T00:00:00') : null;
+            const toDateVal = dateTo.value ? new Date(dateTo.value + 'T23:59:59') : null;
+
+            filteredPayments = allPayments.filter(p => {
+                // Text match (client, code, product)
+                const codeMatch = (p.code || '').toLowerCase().includes(searchVal);
+                const clientMatch = (p.client || p.clientName || '').toLowerCase().includes(searchVal);
+                const productMatch = (p.products || '').toLowerCase().includes(searchVal);
+                const textMatch = !searchVal || codeMatch || clientMatch || productMatch;
+
+                // Status match
+                const info = getStatusInfo(p.status);
+                let statusMatch = true;
+                if (statusVal === 'pendiente') statusMatch = info.raw === 'pendiente';
+                else if (statusVal === 'confirmado') statusMatch = info.isConfirmed;
+                else if (statusVal === 'enviado') statusMatch = info.isShipped;
+                else if (statusVal === 'entregado') statusMatch = info.isDelivered;
+                else if (statusVal === 'rechazado') statusMatch = info.isRejected;
+
+                // Method match
+                let methodMatch = true;
+                if (methodVal !== 'todos') {
+                    methodMatch = (p.method || '').toLowerCase() === methodVal;
+                }
+
+                // Date match
+                let dateMatch = true;
+                if (fromDateVal || toDateVal) {
+                    const pDate = parsePaymentDate(p.date);
+                    if (pDate && !isNaN(pDate)) {
+                        if (fromDateVal && pDate < fromDateVal) dateMatch = false;
+                        if (toDateVal && pDate > toDateVal) dateMatch = false;
+                    } else {
+                        dateMatch = false;
+                    }
+                }
+
+                return textMatch && statusMatch && methodMatch && dateMatch;
+            });
+
+            currentPage = 1;
+            renderPaginatedTable();
+        }
+
+        // ===== RENDER TABLE WITH PAGINATION =====
+        function renderPaginatedTable() {
+            const pageSize = parseInt(pageSizeSelect.value);
+            const totalPages = Math.max(1, Math.ceil(filteredPayments.length / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const start = (currentPage - 1) * pageSize;
+            const end = Math.min(start + pageSize, filteredPayments.length);
+            const pagePayments = filteredPayments.slice(start, end);
+
+            renderTable(pagePayments);
+            renderPagination(totalPages, start, end);
+        }
+
+        function renderTable(payments) {
+            if (payments.length === 0) {
+                tableContainer.innerHTML = '<div class="codes-empty">No hay pagos que coincidan con los filtros.</div>';
+                return;
+            }
+
+            const notes = getNotes();
+            let html = '<table class="codes-table"><thead><tr>';
+            html += '<th>Código</th><th>Método</th><th>Monto</th>';
+            html += '<th>Cliente</th><th>Productos</th><th>Fecha</th><th>Estado</th>';
+            html += '</tr></thead><tbody>';
+
+            payments.forEach(entry => {
+                const dateStr = formatDate(entry.date);
+                const methodClass = (entry.method || '').toLowerCase();
+                const methodName = entry.method || '—';
+                const methodBg = methodClass === 'yape' ? 'var(--color-yape)' : (methodClass === 'plin' ? 'var(--color-plin)' : '#333');
+                const info = getStatusInfo(entry.status);
+                const hasNote = notes[entry.code];
+                const noteHtml = hasNote ? '<span class="note-icon" title="Tiene nota">💬</span>' : '';
+
+                let actionsHtml = '';
+                if (info.raw === 'pendiente' && fromCloud) {
+                    actionsHtml = '<div style="display:inline-flex;gap:4px;margin-left:6px;">';
+                    actionsHtml += '<button type="button" class="btn-action approve" onclick="event.stopPropagation();updatePaymentStatus(\'' + entry.code + '\',\'Confirmado\')" title="Aprobar">✓</button>';
+                    actionsHtml += '<button type="button" class="btn-action reject" onclick="event.stopPropagation();updatePaymentStatus(\'' + entry.code + '\',\'Rechazado\')" title="Rechazar">✕</button>';
+                    actionsHtml += '</div>';
+                }
+
+                const escapedProducts = (entry.products || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                html += '<tr onclick="openDetailModal(\'' + entry.code + '\')">';
+                html += '<td><strong>' + (entry.code || '—') + '</strong>' + noteHtml + '</td>';
+                html += '<td><span class="method-badge" style="background:' + methodBg + '">' + methodName + '</span></td>';
+                html += '<td>' + (entry.amount || '—') + '</td>';
+                html += '<td>' + (entry.client || entry.clientName || '—') + '</td>';
+                html += '<td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + escapedProducts + '">' + (entry.products || '—') + '</td>';
+                html += '<td style="font-size:0.8rem;">' + dateStr + '</td>';
+                html += '<td><div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">';
+                html += '<span class="method-badge" style="background:' + info.color + '">' + info.displayStatus + '</span>';
+                html += actionsHtml;
+                html += '</div></td></tr>';
+            });
+
+            html += '</tbody></table>';
+            tableContainer.innerHTML = html;
+        }
+
+        function renderPagination(totalPages, start, end) {
+            const total = filteredPayments.length;
+            pageInfo.textContent = total > 0
+                ? 'Mostrando ' + (start + 1) + '–' + end + ' de ' + total
+                : 'Sin resultados';
+
+            pagePrev.disabled = currentPage <= 1;
+            pageNext.disabled = currentPage >= totalPages;
+
+            let numbersHtml = '';
+            const maxButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+
+            for (let i = startPage; i <= endPage; i++) {
+                numbersHtml += '<button class="page-btn ' + (i === currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+            }
+            pageNumbers.innerHTML = numbersHtml;
+        }
+
+        window.goToPage = function(p) { currentPage = p; renderPaginatedTable(); };
+        pagePrev.addEventListener('click', function() { if (currentPage > 1) { currentPage--; renderPaginatedTable(); } });
+        pageNext.addEventListener('click', function() { currentPage++; renderPaginatedTable(); });
+        pageSizeSelect.addEventListener('change', function() { currentPage = 1; renderPaginatedTable(); });
+
+        // ===== DETAIL MODAL =====
+        window.openDetailModal = function(code) {
+            const entry = allPayments.find(function(p) { return p.code === code; });
+            if (!entry) return;
+            currentModalCode = code;
+
+            const info = getStatusInfo(entry.status);
+            const methodClass = (entry.method || '').toLowerCase();
+            const methodBg = methodClass === 'yape' ? 'var(--color-yape)' : (methodClass === 'plin' ? 'var(--color-plin)' : '#333');
+
+            let gridHtml = '';
+            gridHtml += '<div class="detail-item"><span class="detail-label">Código de Operación</span>';
+            gridHtml += '<span class="detail-value"><strong>' + (entry.code || '—') + '</strong></span></div>';
+            gridHtml += '<div class="detail-item"><span class="detail-label">Método de Pago</span>';
+            gridHtml += '<span class="detail-value"><span class="method-badge" style="background:' + methodBg + '">' + (entry.method || '—') + '</span></span></div>';
+            gridHtml += '<div class="detail-item"><span class="detail-label">Monto</span>';
+            gridHtml += '<span class="detail-value" style="font-size:1.1rem;font-weight:700;">' + (entry.amount || '—') + '</span></div>';
+            gridHtml += '<div class="detail-item"><span class="detail-label">Estado</span>';
+            gridHtml += '<span class="detail-value"><span class="method-badge" style="background:' + info.color + '">' + info.displayStatus + '</span></span></div>';
+            gridHtml += '<div class="detail-item"><span class="detail-label">Cliente</span>';
+            gridHtml += '<span class="detail-value">' + (entry.client || entry.clientName || '—') + '</span></div>';
+            gridHtml += '<div class="detail-item"><span class="detail-label">Documento</span>';
+            gridHtml += '<span class="detail-value">' + (entry.document || '—') + '</span></div>';
+            gridHtml += '<div class="detail-item"><span class="detail-label">Fecha</span>';
+            gridHtml += '<span class="detail-value">' + formatDate(entry.date) + '</span></div>';
+            gridHtml += '<div class="detail-item"><span class="detail-label">Destino / Agencia</span>';
+            gridHtml += '<span class="detail-value">' + (entry.destination || '—') + '</span></div>';
+            gridHtml += '<div class="detail-item full"><span class="detail-label">Productos</span>';
+            gridHtml += '<span class="detail-value">' + (entry.products || '—') + '</span></div>';
+
+            gridHtml += '<div class="detail-item full"><span class="detail-label">Comprobante de Pago</span>';
+            if (entry.imageUrl) {
+                gridHtml += '<a href="' + entry.imageUrl + '" target="_blank" rel="noopener noreferrer">';
+                gridHtml += '<img src="' + entry.imageUrl + '" alt="Comprobante de pago" class="receipt-image" loading="lazy">';
+                gridHtml += '</a>';
+            } else {
+                gridHtml += '<span class="detail-value" style="color:var(--color-text-muted);font-style:italic;">Sin imagen adjunta (pago registrado antes de esta función, o revisa el chat de WhatsApp).</span>';
+            }
+            gridHtml += '</div>';
+
+            modalDetailGrid.innerHTML = gridHtml;
+
+            // Timeline
+            updateTimeline(entry.status, code);
+
+            // Notes
+            const notes = getNotes();
+            modalNotes.value = notes[code] || '';
+
+            // Actions
+            let actionsHtml = '';
+            if (fromCloud) {
+                const statusIdx = getStatusIndex(entry.status);
+                if (statusIdx >= 0 && statusIdx < 3 && !info.isRejected) {
+                    const nextStatus = STATUS_ORDER[statusIdx + 1];
+                    actionsHtml += '<button class="btn" style="background:var(--color-confirmed);" onclick="updatePaymentStatus(\'' + code + '\',\'' + nextStatus + '\')">✓ Marcar como ' + nextStatus + '</button>';
+                }
+                if (!info.isRejected && info.raw === 'pendiente') {
+                    actionsHtml += '<button class="btn" style="background:var(--color-rejected);" onclick="updatePaymentStatus(\'' + code + '\',\'Rechazado\')">✕ Rechazar</button>';
+                }
+                var otherMethod = methodClass === 'yape' ? 'Plin' : 'Yape';
+                actionsHtml += '<button class="btn btn-export" onclick="updatePaymentMethod(\'' + code + '\',\'' + (entry.method || '') + '\')">↔ Cambiar a ' + otherMethod + '</button>';
+            }
+            modalActions.innerHTML = actionsHtml;
+
+            modalOverlay.classList.add('active');
+        };
+
+        function updateTimeline(status, code) {
+            const statusIdx = getStatusIndex(status);
+            const steps = timelineStepper.querySelectorAll('.timeline-step');
+            const totalSteps = steps.length;
+
+            steps.forEach(function(step, i) {
+                step.classList.remove('active', 'completed');
+                if (statusIdx >= 0) {
+                    if (i < statusIdx) step.classList.add('completed');
+                    else if (i === statusIdx) step.classList.add('active');
+                }
+
+                // Make steps clickable
+                step.onclick = function() {
+                    if (!fromCloud) return;
+                    const targetStatus = step.getAttribute('data-status');
+                    if (targetStatus && confirm('¿Cambiar estado a "' + targetStatus + '"?')) {
+                        updatePaymentStatus(code, targetStatus);
+                    }
+                };
+            });
+
+            // Progress bar width
+            const progressPercent = statusIdx <= 0 ? 0 : (statusIdx / (totalSteps - 1)) * 100;
+            timelineProgress.style.width = progressPercent + '%';
+        }
+
+        // Close modal
+        modalClose.addEventListener('click', function() { modalOverlay.classList.remove('active'); });
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) modalOverlay.classList.remove('active');
+        });
+
+        // Save note
+        btnSaveNote.addEventListener('click', function() {
+            if (!currentModalCode) return;
+            saveNote(currentModalCode, modalNotes.value);
+            showToast('📝 Nota guardada.');
+            applyFilters();
+        });
+
+        // ===== FILTER EVENTS =====
+        searchInput.addEventListener('input', applyFilters);
+        statusSelect.addEventListener('change', applyFilters);
+        methodSelect.addEventListener('change', applyFilters);
+        dateFrom.addEventListener('change', applyFilters);
+        dateTo.addEventListener('change', applyFilters);
+
+        // ===== REFRESH =====
+        btnRefresh.addEventListener('click', async function() {
+            btnRefresh.disabled = true;
+            btnRefresh.innerHTML = '🔄 Sincronizando...';
+            await loadPayments();
+            btnRefresh.disabled = false;
+            btnRefresh.innerHTML = '🔄 Actualizar';
+            showToast('🔄 Datos actualizados con éxito.');
+        });
+
+        // ===== EXPORT CSV =====
+        btnExportCsv.addEventListener('click', function() {
+            if (filteredPayments.length === 0) { showToast('⚠️ No hay datos para exportar.'); return; }
+            const headers = ['Código', 'Método', 'Monto', 'Cliente', 'Documento', 'Productos', 'Destino', 'Fecha', 'Estado'];
+            const rows = filteredPayments.map(function(p) {
+                return [
+                    p.code, p.method, p.amount, p.client || p.clientName, p.document,
+                    '"' + (p.products || '').replace(/"/g, '""') + '"',
+                    p.destination, p.date, p.status || 'Pendiente'
+                ];
+            });
+            const csv = [headers.join(',')].concat(rows.map(function(r) { return r.join(','); })).join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'seguimiento_pagos_' + new Date().toISOString().slice(0,10) + '.csv';
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('📥 CSV exportado con éxito.');
+        });
+
+        // ===== EXPORT PDF =====
+        btnExportPdf.addEventListener('click', function() {
+            window.print();
+        });
+
+        // ===== UPDATE STATUS =====
+        window.updatePaymentStatus = async function(code, newStatus) {
+            const sheetsUrl = getGoogleScriptUrl();
+            if (!sheetsUrl) { showToast('⚠️ Configura la URL de Google Sheets.'); return; }
+
+            if (!confirm('¿Marcar pago #' + code + ' como "' + newStatus + '"?')) return;
+
+            const actionButtons = document.querySelectorAll('.btn-action, .modal-actions .btn');
+            actionButtons.forEach(function(btn) { btn.disabled = true; });
+
+            try {
+                const updateUrl = sheetsUrl + '?action=updateStatus&code=' + code + '&status=' + newStatus;
+                showToast('⏳ Actualizando...');
+                const response = await fetch(updateUrl);
+                const result = await response.json();
+                if (result.success) {
+                    showToast('✅ Pago #' + code + ' → "' + newStatus + '"');
+                    modalOverlay.classList.remove('active');
+                    await loadPayments();
+                } else {
+                    showToast('❌ ' + (result.error || 'Error al actualizar.'));
+                    actionButtons.forEach(function(btn) { btn.disabled = false; });
+                }
+            } catch (e) {
+                try {
+                    await fetch(sheetsUrl, {
+                        method: 'POST', mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'updateStatus', code: code, status: newStatus })
+                    });
+                    showToast('⏳ Enviado. Recargando...');
+                    modalOverlay.classList.remove('active');
+                    setTimeout(async function() { await loadPayments(); showToast('✅ Estado actualizado.'); }, 1500);
+                } catch (err) {
+                    showToast('❌ Error: ' + err.message);
+                    actionButtons.forEach(function(btn) { btn.disabled = false; });
+                }
+            }
+        };
+
+        // ===== UPDATE METHOD =====
+        window.updatePaymentMethod = async function(code, currentMethod) {
+            const sheetsUrl = getGoogleScriptUrl();
+            if (!sheetsUrl) { showToast('⚠️ Configura la URL de Google Sheets.'); return; }
+
+            const newMethod = (currentMethod.toLowerCase() === 'yape') ? 'Plin' : 'Yape';
+            if (!confirm('¿Cambiar método a "' + newMethod + '" para #' + code + '?')) return;
+
+            try {
+                const updateUrl = sheetsUrl + '?action=updateMethod&code=' + code + '&method=' + newMethod;
+                showToast('⏳ Actualizando método...');
+                const response = await fetch(updateUrl);
+                const result = await response.json();
+                if (result.success) {
+                    showToast('✅ Método → "' + newMethod + '"');
+                    modalOverlay.classList.remove('active');
+                    await loadPayments();
+                } else {
+                    showToast('❌ ' + (result.error || 'Error.'));
+                }
+            } catch (e) {
+                try {
+                    await fetch(sheetsUrl, {
+                        method: 'POST', mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'updateMethod', code: code, method: newMethod })
+                    });
+                    showToast('⏳ Enviado...');
+                    modalOverlay.classList.remove('active');
+                    setTimeout(async function() { await loadPayments(); showToast('✅ Método actualizado.'); }, 1500);
+                } catch (err) {
+                    showToast('❌ Error: ' + err.message);
+                }
+            }
+        };
+
+        // ===== TOAST =====
+        function showToast(message) {
+            const existing = document.querySelector('.toast-notification');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.remove(); }, 300); }, 3500);
+        }
+
+        // ===== INIT =====
+        loadPayments();
+    });
+    </script>
+</body>
+</html>

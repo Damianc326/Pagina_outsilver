@@ -172,9 +172,7 @@
             background: linear-gradient(90deg, #6B2FA0, #8B3FC0);
         }
 
-        .payment-section.plin-section::before {
-            background: linear-gradient(90deg, #00B140, #00D14F);
-        }
+
 
         .section-title {
             font-size: 1.15rem;
@@ -201,9 +199,7 @@
             background: linear-gradient(135deg, #6B2FA0, #8B3FC0);
         }
 
-        .plin-section .section-title .badge {
-            background: linear-gradient(135deg, #00B140, #00D14F);
-        }
+
 
         /* QR Upload */
         .qr-upload-area {
@@ -424,7 +420,7 @@
         }
 
         .method-badge.yape { background: #6B2FA0; }
-        .method-badge.plin { background: #00B140; }
+
     </style>
 </head>
 <body>
@@ -436,13 +432,15 @@
             <li><a href="editar.html">Editar Producto</a></li>
             <li><a href="stock.html">Gestión de Stock</a></li>
             <li><a href="metodo-pago.html" class="active">Método de Pago</a></li>
+            <li><a href="historial-pagos.html">Seguimiento de Pagos</a></li>
+            <li><a href="pendientes-programar.html">Pendientes a Programar</a></li>
         </ul>
     </aside>
 
     <main class="main-content">
         <div class="admin-container">
             <h1>💳 Método de Pago</h1>
-            <p class="subtitle">Configura tus datos de Yape y Plin para recibir pagos. Los clientes verán esta información al momento de pagar.</p>
+            <p class="subtitle">Configura tus datos de Yape para recibir pagos. Los clientes verán esta información al momento de pagar.</p>
 
             <div class="status-box" id="status-box">
                 Cargando configuración guardada...
@@ -455,6 +453,11 @@
                     <label for="config-titular">Nombre del Titular de la Cuenta</label>
                     <input type="text" id="config-titular" placeholder="Ej: Juan Pérez García" value="Out Silver Perú">
                     <span class="help-text">Este nombre se mostrará al cliente para que verifique que está pagando a la persona correcta.</span>
+                </div>
+                <div class="form-group">
+                    <label for="config-sheets-url">📊 URL de Google Sheets (Apps Script)</label>
+                    <input type="url" id="config-sheets-url" placeholder="https://script.google.com/macros/s/...">
+                    <span class="help-text">Pega aquí la URL de tu Google Apps Script desplegado. Los pagos de los clientes se guardarán en tu Google Sheet.</span>
                 </div>
             </div>
 
@@ -486,46 +489,12 @@
                 </div>
             </div>
 
-            <!-- Plin Config -->
-            <div class="payment-section plin-section">
-                <h3 class="section-title">
-                    <span class="badge">P</span>
-                    Configuración de Plin
-                </h3>
-                <div class="form-group">
-                    <label for="config-plin-number">Número de Plin</label>
-                    <input type="tel" id="config-plin-number" placeholder="Ej: 966314626" value="966314626" maxlength="9">
-                    <span class="help-text">Número de celular asociado a tu cuenta Plin (9 dígitos).</span>
-                </div>
-                <div class="form-group">
-                    <label>Código QR de Plin (Opcional)</label>
-                    <div class="qr-upload-area" id="plin-qr-upload">
-                        <span class="upload-icon">📷</span>
-                        <div class="upload-text">Subir QR de Plin</div>
-                        <div class="upload-hint">Haz clic o arrastra tu imagen QR aquí</div>
-                    </div>
-                    <input type="file" id="plin-qr-input" accept="image/*" style="display: none;">
-                    <div class="qr-preview" id="plin-qr-preview">
-                        <img id="plin-qr-preview-img" src="" alt="QR Plin">
-                        <br>
-                        <button type="button" class="remove-qr" id="plin-qr-remove">✕ Quitar QR</button>
-                    </div>
-                    <span class="help-text">Si subes un QR, los clientes podrán escanearlo directamente desde tu tienda.</span>
-                </div>
-            </div>
 
             <div class="actions">
                 <button type="button" class="btn btn-primary" id="btn-save-config">💾 Guardar Configuración</button>
             </div>
 
-            <!-- Codes History -->
-            <div class="codes-history">
-                <h3>📋 Historial de Códigos de Operación</h3>
-                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0;">Códigos registrados por clientes que han verificado su pago. Se usa para detectar pagos duplicados.</p>
-                <div id="codes-history-content">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
+
 
         </div>
     </main>
@@ -534,29 +503,26 @@
         document.addEventListener('DOMContentLoaded', () => {
             const PAYMENT_CONFIG_KEY = 'outsilver_payment_config';
             const USED_CODES_KEY = 'outsilver_used_codes';
+            const SHEETS_URL_KEY = 'outsilver_sheets_url';
 
             const statusBox = document.getElementById('status-box');
             const titularInput = document.getElementById('config-titular');
             const yapeNumberInput = document.getElementById('config-yape-number');
-            const plinNumberInput = document.getElementById('config-plin-number');
+            const sheetsUrlInput = document.getElementById('config-sheets-url');
+
             const yapeQrUpload = document.getElementById('yape-qr-upload');
             const yapeQrInput = document.getElementById('yape-qr-input');
             const yapeQrPreview = document.getElementById('yape-qr-preview');
             const yapeQrPreviewImg = document.getElementById('yape-qr-preview-img');
             const yapeQrRemove = document.getElementById('yape-qr-remove');
-            const plinQrUpload = document.getElementById('plin-qr-upload');
-            const plinQrInput = document.getElementById('plin-qr-input');
-            const plinQrPreview = document.getElementById('plin-qr-preview');
-            const plinQrPreviewImg = document.getElementById('plin-qr-preview-img');
-            const plinQrRemove = document.getElementById('plin-qr-remove');
+
             const btnSave = document.getElementById('btn-save-config');
 
             let currentConfig = {
                 titular: 'Out Silver Perú',
                 yape_number: '966314626',
-                plin_number: '966314626',
                 yape_qr: '',
-                plin_qr: ''
+                sheets_url: ''
             };
 
             // --- LOAD SAVED CONFIG ---
@@ -567,16 +533,14 @@
                         currentConfig = JSON.parse(saved);
                         titularInput.value = currentConfig.titular || '';
                         yapeNumberInput.value = currentConfig.yape_number || '';
-                        plinNumberInput.value = currentConfig.plin_number || '';
+                        sheetsUrlInput.value = currentConfig.sheets_url || '';
+
 
                         if (currentConfig.yape_qr) {
                             yapeQrPreviewImg.src = currentConfig.yape_qr;
                             yapeQrPreview.classList.add('visible');
                         }
-                        if (currentConfig.plin_qr) {
-                            plinQrPreviewImg.src = currentConfig.plin_qr;
-                            plinQrPreview.classList.add('visible');
-                        }
+
 
                         statusBox.innerHTML = '<strong>✅ Estado:</strong> Configuración cargada correctamente.';
                         statusBox.className = 'status-box success';
@@ -648,13 +612,12 @@
             }
 
             setupQrUpload(yapeQrUpload, yapeQrInput, yapeQrPreview, yapeQrPreviewImg, yapeQrRemove, 'yape_qr');
-            setupQrUpload(plinQrUpload, plinQrInput, plinQrPreview, plinQrPreviewImg, plinQrRemove, 'plin_qr');
+
 
             // --- SAVE CONFIG ---
             btnSave.addEventListener('click', () => {
                 const titular = titularInput.value.trim();
                 const yapeNumber = yapeNumberInput.value.trim();
-                const plinNumber = plinNumberInput.value.trim();
 
                 if (!titular) {
                     showToast('⚠️ Ingresa el nombre del titular.');
@@ -662,14 +625,16 @@
                     return;
                 }
 
-                if (!yapeNumber && !plinNumber) {
-                    showToast('⚠️ Ingresa al menos un número (Yape o Plin).');
+                if (!yapeNumber) {
+                    showToast('⚠️ Ingresa el número de Yape.');
+                    yapeNumberInput.focus();
                     return;
                 }
 
                 currentConfig.titular = titular;
                 currentConfig.yape_number = yapeNumber;
-                currentConfig.plin_number = plinNumber;
+                currentConfig.sheets_url = sheetsUrlInput.value.trim();
+
 
                 try {
                     localStorage.setItem(PAYMENT_CONFIG_KEY, JSON.stringify(currentConfig));
@@ -680,74 +645,6 @@
                     showToast('❌ Error al guardar: ' + e.message);
                 }
             });
-
-            // --- CODES HISTORY ---
-            function renderCodesHistory() {
-                const container = document.getElementById('codes-history-content');
-                let codes = [];
-                try {
-                    const data = localStorage.getItem(USED_CODES_KEY);
-                    if (data) codes = JSON.parse(data);
-                } catch (e) { /* ignore */ }
-
-                if (codes.length === 0) {
-                    container.innerHTML = '<div class="codes-empty">No hay códigos registrados aún.</div>';
-                    return;
-                }
-
-                // Sort by date desc
-                codes.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                let html = `
-                    <table class="codes-table">
-                        <thead>
-                            <tr>
-                                <th>Código</th>
-                                <th>Método</th>
-                                <th>Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-
-                codes.forEach(entry => {
-                    const date = new Date(entry.date);
-                    const dateStr = date.toLocaleDateString('es-PE', {
-                        day: '2-digit', month: '2-digit', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit'
-                    });
-                    const methodClass = (entry.method || '').toLowerCase();
-                    const methodName = methodClass === 'yape' ? 'Yape' : methodClass === 'plin' ? 'Plin' : entry.method || '—';
-
-                    html += `
-                        <tr>
-                            <td><strong>${entry.code}</strong></td>
-                            <td><span class="method-badge ${methodClass}">${methodName}</span></td>
-                            <td>${dateStr}</td>
-                        </tr>
-                    `;
-                });
-
-                html += `
-                        </tbody>
-                    </table>
-                    <div style="margin-top: 15px; text-align: right;">
-                        <button type="button" class="btn-clear-history" id="btn-clear-codes">🗑️ Limpiar Historial</button>
-                    </div>
-                `;
-
-                container.innerHTML = html;
-
-                document.getElementById('btn-clear-codes').addEventListener('click', () => {
-                    if (confirm('¿Seguro que deseas borrar todo el historial de códigos? Esta acción no se puede deshacer.')) {
-                        localStorage.removeItem(USED_CODES_KEY);
-                        renderCodesHistory();
-                        showToast('🗑️ Historial de códigos eliminado.');
-                    }
-                });
-            }
-
-            renderCodesHistory();
 
             // --- TOAST ---
             function showToast(message) {

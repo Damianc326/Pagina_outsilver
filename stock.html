@@ -310,6 +310,8 @@
             <li><a href="editar.html">Editar Producto</a></li>
             <li><a href="stock.html" class="active">Gestión de Stock</a></li>
             <li><a href="metodo-pago.html">Método de Pago</a></li>
+            <li><a href="historial-pagos.html">Seguimiento de Pagos</a></li>
+            <li><a href="pendientes-programar.html">Pendientes a Programar</a></li>
         </ul>
     </aside>
 
@@ -359,8 +361,11 @@
                 <h3>Añadir Nuevo Color</h3>
                 
                 <div class="modal-form-group">
-                    <label for="new-color-picker">Selecciona el color:</label>
-                    <input type="color" id="new-color-picker" value="#ff5000" style="width: 100%; height: 50px; cursor: pointer;">
+                    <label for="new-color-picker">Selecciona el color o ingresa su código Hexadecimal:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="color" id="new-color-picker" value="#ff5000" style="width: 50px; height: 50px; cursor: pointer; padding: 0; border: none; background: none;">
+                        <input type="text" id="new-color-hex" value="#FF5000" placeholder="#Hex" autocomplete="off" style="flex: 1; padding: 10px; border: 1px solid var(--color-border); border-radius: 4px; font-family: monospace; font-size: 1.1rem; text-transform: uppercase;">
+                    </div>
                 </div>
                 
                 <div class="modal-form-group">
@@ -371,6 +376,31 @@
                 <div class="modal-actions">
                     <button type="button" class="btn" id="btn-cancel-color">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="btn-confirm-color">Aceptar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Color Modal -->
+        <div class="modal-overlay" id="edit-color-modal">
+            <div class="modal-content">
+                <h3>Editar Color</h3>
+                
+                <div class="modal-form-group">
+                    <label for="edit-color-picker">Selecciona el nuevo color o ingresa su código Hexadecimal:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="color" id="edit-color-picker" value="#ff5000" style="width: 50px; height: 50px; cursor: pointer; padding: 0; border: none; background: none;">
+                        <input type="text" id="edit-color-hex" value="#FF5000" placeholder="#Hex" autocomplete="off" style="flex: 1; padding: 10px; border: 1px solid var(--color-border); border-radius: 4px; font-family: monospace; font-size: 1.1rem; text-transform: uppercase;">
+                    </div>
+                </div>
+                
+                <div class="modal-form-group">
+                    <label for="edit-color-name">Nombre del color:</label>
+                    <input type="text" id="edit-color-name" placeholder="Ej: Naranja Neón" autocomplete="off" style="padding: 10px; border: 1px solid var(--color-border); border-radius: 4px; font-family: inherit;">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="btn-cancel-edit-color">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-edit-color">Guardar Cambios</button>
                 </div>
             </div>
         </div>
@@ -433,7 +463,10 @@
                 "#a0e0ff": "Celeste",
                 "#76e5c1": "Cemento",
                 "#ff7a00": "Amarillo",
-                "#a3e12c": "Olivo"
+                "#a3e12c": "Olivo",
+                "#6cd4af": "Cemento",
+                "#74b992": "Verde Olivo",
+                "#e7eee9": "Cemento"
             };
 
             function renderStockEditor(product) {
@@ -460,7 +493,7 @@
                 tallas.forEach(talla => {
                     thead += `<th>Talla ${talla}</th>`;
                 });
-                thead += `</tr>`;
+                thead += `<th>Imagen</th></tr>`;
 
                 let tbody = ``;
                 colores.forEach(color => {
@@ -471,7 +504,20 @@
                     
                     let colorName = colorNamesMap[color.toLowerCase()] || color;
                     let colorLabel = color === "default" ? "Único/Default" : 
-                        `<div class="color-cell"><div class="color-swatch" style="background-color: ${color}"></div> <span>${colorName}</span></div>`;
+                        `<div class="color-cell" style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="color-swatch" style="background-color: ${color}"></div> 
+                                <span>${colorName}</span>
+                            </div>
+                            <div style="display: flex; gap: 5px;">
+                                <button type="button" class="btn-edit-color" data-color="${color}" title="Editar este color" style="background: none; border: none; color: #007bff; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                                <button type="button" class="btn-delete-color" data-color="${color}" title="Eliminar este color" style="background: none; border: none; color: #dc3545; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                            </div>
+                        </div>`;
                         
                     tbody += `<tr><td>${colorLabel}</td>`;
                     
@@ -481,6 +527,33 @@
                             <input type="number" min="0" class="stock-input" data-color="${color}" data-talla="${talla}" value="${currentStock}">
                         </td>`;
                     });
+
+                    // Columna de Imagen
+                    if (!product.colores_imagenes) product.colores_imagenes = {};
+                    const currentImg = product.colores_imagenes[color] || '';
+                    const imgThumb = currentImg ? `<img src="${currentImg}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;" onerror="this.src='https://via.placeholder.com/30'">` : '';
+                    
+                    tbody += `
+                        <td style="text-align: center;">
+                            <div style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+                                <div class="img-preview-container">${imgThumb}</div>
+                                <label style="cursor: pointer; background: #eee; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #ccc; flex-shrink: 0;">
+                                    Subir
+                                    <input type="file" class="color-img-input" data-color="${color}" accept="image/*" style="display: none;" onchange="
+                                        const file = this.files[0];
+                                        if (file) {
+                                            const reader = new FileReader();
+                                            const container = this.parentElement.previousElementSibling;
+                                            reader.onload = function(e) {
+                                                container.innerHTML = '<img src=\\'' + e.target.result + '\\' style=\\'width: 30px; height: 30px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;\\'>';
+                                            }
+                                            reader.readAsDataURL(file);
+                                        }
+                                    ">
+                                </label>
+                            </div>
+                        </td>
+                    `;
                     
                     tbody += `</tr>`;
                 });
@@ -490,6 +563,52 @@
                 } else {
                     stockTable.innerHTML = `<thead>${thead}</thead><tbody>${tbody}</tbody>`;
                 }
+
+                // Lógica de los botones de eliminar color
+                const deleteColorBtns = stockTable.querySelectorAll('.btn-delete-color');
+                deleteColorBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const colorToRemove = btn.getAttribute('data-color');
+                        let colorName = colorNamesMap[colorToRemove.toLowerCase()] || colorToRemove;
+                        if (confirm(`¿Estás seguro de que deseas eliminar el color "${colorName}"? Se perderá el stock e imagen asociados a este color.`)) {
+                            saveCurrentInputsToStock(); // Guardar valores actuales antes de borrar
+                            
+                            // Eliminar de colores_hex
+                            currentProduct.colores_hex = currentProduct.colores_hex.filter(c => c !== colorToRemove);
+                            // Eliminar de stock
+                            if (currentProduct.stock) delete currentProduct.stock[colorToRemove];
+                            // Eliminar de colores_imagenes
+                            if (currentProduct.colores_imagenes) delete currentProduct.colores_imagenes[colorToRemove];
+                            
+                            renderStockEditor(currentProduct); // Re-renderizar la tabla
+                        }
+                    });
+                });
+
+                // Lógica de los botones de editar color
+                const editColorBtns = stockTable.querySelectorAll('.btn-edit-color');
+                editColorBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const colorToEdit = btn.getAttribute('data-color');
+                        if (colorToEdit === "default") {
+                            alert("No se puede editar el color por defecto.");
+                            return;
+                        }
+                        colorToEditGlobal = colorToEdit;
+                        
+                        let colorName = colorNamesMap[colorToEdit.toLowerCase()] || colorToEdit;
+                        
+                        const editColorPicker = document.getElementById('edit-color-picker');
+                        const editColorHex = document.getElementById('edit-color-hex');
+                        const editColorNameInput = document.getElementById('edit-color-name');
+                        
+                        editColorPicker.value = colorToEdit;
+                        editColorHex.value = colorToEdit.toUpperCase();
+                        editColorNameInput.value = colorName;
+                        
+                        document.getElementById('edit-color-modal').style.display = 'flex';
+                    });
+                });
             }
 
             const btnAddColor = document.getElementById('btn-add-color');
@@ -514,12 +633,29 @@
             const btnCancelColor = document.getElementById('btn-cancel-color');
             const btnConfirmColor = document.getElementById('btn-confirm-color');
             const newColorPicker = document.getElementById('new-color-picker');
+            const newColorHex = document.getElementById('new-color-hex');
             const newColorNameInput = document.getElementById('new-color-name');
+
+            // Sincronizar picker con hex
+            newColorPicker.addEventListener('input', (e) => {
+                newColorHex.value = e.target.value.toUpperCase();
+            });
+
+            // Sincronizar hex con picker
+            newColorHex.addEventListener('input', (e) => {
+                let val = e.target.value;
+                if (!val.startsWith('#')) val = '#' + val;
+                if (/^#[0-9A-Fa-f]{6}$/i.test(val)) {
+                    newColorPicker.value = val;
+                }
+            });
 
             btnAddColor.addEventListener('click', () => {
                 if (!currentProduct) return;
                 // Show modal
                 newColorNameInput.value = '';
+                newColorPicker.value = '#ff5000';
+                newColorHex.value = '#FF5000';
                 colorModal.style.display = 'flex';
                 newColorNameInput.focus();
             });
@@ -529,7 +665,9 @@
             });
 
             btnConfirmColor.addEventListener('click', () => {
-                let newColor = newColorPicker.value; // It comes as hex e.g. #ff0000
+                let valHex = newColorHex.value.trim();
+                if (!valHex.startsWith('#')) valHex = '#' + valHex;
+                let newColor = valHex; // Usa el valor del input texto
                 let newColorName = newColorNameInput.value.trim();
 
                 if (!newColorName) {
@@ -560,6 +698,91 @@
                 }
             });
 
+            let colorToEditGlobal = null;
+            
+            const editColorModal = document.getElementById('edit-color-modal');
+            const btnCancelEditColor = document.getElementById('btn-cancel-edit-color');
+            const btnConfirmEditColor = document.getElementById('btn-confirm-edit-color');
+            const editColorPicker = document.getElementById('edit-color-picker');
+            const editColorHex = document.getElementById('edit-color-hex');
+            const editColorNameInput = document.getElementById('edit-color-name');
+
+            // Sincronizar picker con hex (Edit)
+            if (editColorPicker) {
+                editColorPicker.addEventListener('input', (e) => {
+                    editColorHex.value = e.target.value.toUpperCase();
+                });
+            }
+
+            // Sincronizar hex con picker (Edit)
+            if (editColorHex) {
+                editColorHex.addEventListener('input', (e) => {
+                    let val = e.target.value;
+                    if (!val.startsWith('#')) val = '#' + val;
+                    if (/^#[0-9A-Fa-f]{6}$/i.test(val)) {
+                        editColorPicker.value = val;
+                    }
+                });
+            }
+            
+            if (btnCancelEditColor) {
+                btnCancelEditColor.addEventListener('click', () => {
+                    editColorModal.style.display = 'none';
+                    colorToEditGlobal = null;
+                });
+            }
+            
+            if (btnConfirmEditColor) {
+                btnConfirmEditColor.addEventListener('click', () => {
+                    if (!colorToEditGlobal || !currentProduct) return;
+                    
+                    let valHex = editColorHex.value.trim();
+                    if (!valHex.startsWith('#')) valHex = '#' + valHex;
+                    let newColor = valHex;
+                    let newColorName = editColorNameInput.value.trim();
+
+                    if (!newColorName) {
+                        alert("Por favor, ingresa el nombre del color.");
+                        return;
+                    }
+                    
+                    if (newColor.toLowerCase() !== colorToEditGlobal.toLowerCase() && currentProduct.colores_hex.map(c => c.toLowerCase()).includes(newColor.toLowerCase())) {
+                        alert("El color seleccionado ya existe en el producto. Por favor elige otro o elimina el existente.");
+                        return;
+                    }
+
+                    saveCurrentInputsToStock();
+                    
+                    colorNamesMap[newColor.toLowerCase()] = newColorName;
+                    
+                    const oldColor = colorToEditGlobal;
+                    
+                    const colorIndex = currentProduct.colores_hex.findIndex(c => c.toLowerCase() === oldColor.toLowerCase());
+                    if (colorIndex !== -1) {
+                        currentProduct.colores_hex[colorIndex] = newColor;
+                    }
+                    
+                    if (currentProduct.stock && currentProduct.stock[oldColor]) {
+                        currentProduct.stock[newColor] = currentProduct.stock[oldColor];
+                        if (oldColor.toLowerCase() !== newColor.toLowerCase()) {
+                            delete currentProduct.stock[oldColor];
+                        }
+                    }
+                    
+                    if (currentProduct.colores_imagenes && currentProduct.colores_imagenes[oldColor]) {
+                        currentProduct.colores_imagenes[newColor] = currentProduct.colores_imagenes[oldColor];
+                        if (oldColor.toLowerCase() !== newColor.toLowerCase()) {
+                            delete currentProduct.colores_imagenes[oldColor];
+                        }
+                    }
+                    
+                    editColorModal.style.display = 'none';
+                    colorToEditGlobal = null;
+                    
+                    renderStockEditor(currentProduct);
+                });
+            }
+
             btnAddSize.addEventListener('click', () => {
                 if (!currentProduct) return;
                 const newSize = prompt("Ingresa la nueva talla (ej. 18, XXL, Única):");
@@ -583,6 +806,23 @@
                 // Gather data from inputs
                 saveCurrentInputsToStock();
 
+                // Recolectar archivos de imagen nuevos
+                const imgInputs = stockTable.querySelectorAll('.color-img-input');
+                const newImageFiles = [];
+                
+                if (!currentProduct.colores_imagenes) {
+                    currentProduct.colores_imagenes = {};
+                }
+                
+                imgInputs.forEach(input => {
+                    if (input.files && input.files[0]) {
+                        const color = input.getAttribute('data-color');
+                        const file = input.files[0];
+                        currentProduct.colores_imagenes[color] = "images/" + file.name;
+                        newImageFiles.push(file);
+                    }
+                });
+
                 // Convert to JS string
                 const jsContent = `window.productosData = ${JSON.stringify(window.productosData, null, 4)};`;
 
@@ -604,7 +844,30 @@
                     await writable.write(jsContent);
                     await writable.close();
 
-                    alert('¡Stock actualizado correctamente!');
+                    // Guardar imágenes nuevas
+                    for (const file of newImageFiles) {
+                        alert(`¡Base de datos actualizada! Ahora se guardará la imagen nueva: ${file.name}. Recuerda guardarla en la carpeta "images".`);
+                        try {
+                            const imgHandle = await window.showSaveFilePicker({
+                                suggestedName: file.name,
+                                types: [{
+                                    description: 'Image File',
+                                    accept: {'image/*': ['.png', '.jpg', '.jpeg', '.webp']},
+                                }],
+                            });
+                            const imgWritable = await imgHandle.createWritable();
+                            await imgWritable.write(file);
+                            await imgWritable.close();
+                        } catch (imgError) {
+                            if (imgError.name !== 'AbortError') {
+                                console.error(imgError);
+                                alert('Error al guardar la imagen: ' + imgError.message);
+                            }
+                        }
+                    }
+
+                    alert('¡Stock e imágenes actualizados correctamente!');
+                    renderStockEditor(currentProduct); // Refrescar para mostrar imágenes finales
                     
                 } catch (error) {
                     if (error.name !== 'AbortError') {

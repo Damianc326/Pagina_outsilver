@@ -1,5 +1,5 @@
 // ============================================
-// 08 — Verificación de Pago (Yape / Plin)
+// 08 — Verificación de Pago (Yape)
 // ============================================
 
 (function () {
@@ -9,9 +9,18 @@
     const PAYMENT_CONFIG_KEY = 'outsilver_payment_config';
     const USED_CODES_KEY = 'outsilver_used_codes';
 
+    // --- GOOGLE SHEETS ---
+    // La URL se lee de la configuración guardada en metodo-pago.html
+    function getGoogleScriptUrl() {
+        try {
+            const config = JSON.parse(localStorage.getItem(PAYMENT_CONFIG_KEY) || '{}');
+            return config.sheets_url || '';
+        } catch (e) { return ''; }
+    }
+
     // --- STATE ---
     let currentStep = 1;
-    let selectedMethod = null; // 'yape' | 'plin'
+    let selectedMethod = null; // 'yape'
     let uploadedFile = null;
     let uploadedPreviewUrl = null;
     let ocrResult = { code: '', amount: '' };
@@ -56,9 +65,7 @@
         return {
             titular: 'Out Silver Perú',
             yape_number: '966314626',
-            plin_number: '966314626',
-            yape_qr: '',
-            plin_qr: ''
+            yape_qr: ''
         };
     }
 
@@ -71,18 +78,129 @@
         return [];
     }
 
-    function saveUsedCode(code) {
+    function saveUsedCodeLocal(code, imageUrl) {
+        // Guardar en localStorage (fallback local / historial offline)
         const codes = loadUsedCodes();
+
+        let productsSummary = '';
+        if (checkoutData && checkoutData.items) {
+            productsSummary = checkoutData.items.map(item =>
+                `${item.qty}x ${item.title} (Talla: ${item.size}, Color: ${item.color || 'Único'})`
+            ).join(' | ');
+        }
+
         codes.push({
             code: code,
             date: new Date().toISOString(),
-            method: selectedMethod
+            method: 'Yape',
+            amount: checkoutData ? 'S/ ' + checkoutData.total.toFixed(2) : '',
+            client: checkoutData ? checkoutData.name : '',
+            document: checkoutData ? `${checkoutData.docType} ${checkoutData.docNumber}` : '',
+            products: productsSummary,
+            destination: checkoutData ? `${checkoutData.agency} - ${checkoutData.destination}` : '',
+            status: 'Pendiente',
+            imageUrl: imageUrl || ''
         });
         localStorage.setItem(USED_CODES_KEY, JSON.stringify(codes));
     }
 
+    // Registra el pago en Google Sheets (sube también el comprobante a Drive) y
+    // devuelve la URL pública de la imagen para poder incluirla en el mensaje de WhatsApp.
+    // Nunca rechaza la promesa: ante cualquier falla o demora resuelve con '' para no
+    // bloquear el envío del pedido.
+    function registerPaymentRemote(code) {
+        const scriptUrl = getGoogleScriptUrl();
+        if (!scriptUrl) {
+            console.warn('Google Sheets URL no configurada. El pago solo se guarda localmente.');
+            return Promise.resolve('');
+        }
+
+        let productsSummary = '';
+        if (checkoutData && checkoutData.items) {
+            productsSummary = checkoutData.items.map(item =>
+                `${item.qty}x ${item.title} (Talla: ${item.size}, Color: ${item.color || 'Único'})`
+            ).join(' | ');
+        }
+
+        const payload = {
+            code: code,
+            method: 'Yape',
+            amount: checkoutData ? 'S/ ' + checkoutData.total.toFixed(2) : '',
+            clientName: checkoutData ? checkoutData.name : '',
+            document: checkoutData ? `${checkoutData.docType} ${checkoutData.docNumber}` : '',
+            products: productsSummary,
+            destination: checkoutData ? `${checkoutData.agency} - ${checkoutData.destination}` : ''
+        };
+
+        // text/plain evita el preflight de CORS que Apps Script no puede responder,
+        // permitiendo leer la respuesta (a diferencia del modo 'no-cors' usado antes).
+        const postPayload = (finalPayload) => {
+            return fetch(scriptUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(finalPayload)
+            })
+                .then(res => res.json())
+                .then(result => {
+                    if (result && result.success) {
+                        console.log('✅ Pago registrado en Google Sheets');
+                        return result.imageUrl || '';
+                    }
+                    console.warn('⚠️ Google Sheets respondió con error:', result && result.error);
+                    return '';
+                })
+                .catch(err => {
+                    console.warn('⚠️ No se pudo registrar en Google Sheets:', err);
+                    return '';
+                });
+        };
+
+        const withTimeout = (promise, ms) => Promise.race([
+            promise,
+            new Promise(resolve => setTimeout(() => resolve(''), ms))
+        ]);
+
+        const request = uploadedPreviewUrl
+            ? compressImageForUpload(uploadedPreviewUrl)
+                .then(compressedDataUrl => {
+                    const commaIdx = compressedDataUrl.indexOf(',');
+                    payload.imageMime = compressedDataUrl.substring(5, compressedDataUrl.indexOf(';'));
+                    payload.imageBase64 = compressedDataUrl.substring(commaIdx + 1);
+                    return postPayload(payload);
+                })
+                .catch(() => postPayload(payload))
+            : postPayload(payload);
+
+        // Máximo 8s de espera: si la red está muy lenta, el pedido igual se envía por
+        // WhatsApp (sin el link de la foto) y el registro en Sheets sigue en curso.
+        return withTimeout(request, 8000);
+    }
+
+    // --- IMAGE COMPRESSION (para no saturar Drive/Sheets con capturas de varios MB) ---
+    function compressImageForUpload(dataUrl, maxWidth = 1000, quality = 0.72) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                let { width, height } = img;
+                if (width > maxWidth) {
+                    height = Math.round(height * (maxWidth / width));
+                    width = maxWidth;
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+            img.src = dataUrl;
+        });
+    }
+
     function isCodeDuplicate(code) {
         if (!code || code.length < 4) return false;
+        // Verificar en localStorage (inmediato)
         const codes = loadUsedCodes();
         return codes.some(entry => entry.code === code);
     }
@@ -91,7 +209,7 @@
     window.openPaymentModal = function (data) {
         checkoutData = data;
         currentStep = 1;
-        selectedMethod = null;
+        selectedMethod = 'yape';
         uploadedFile = null;
         uploadedPreviewUrl = null;
         ocrResult = { code: '', amount: '' };
@@ -243,11 +361,10 @@
         const qrImg = document.getElementById('payment-qr-img');
 
         if (infoCard) {
-            infoCard.className = 'payment-info-card ' + (selectedMethod === 'yape' ? 'yape-theme' : 'plin-theme');
+            infoCard.className = 'payment-info-card yape-theme';
         }
 
-        const number = selectedMethod === 'yape' ? config.yape_number : config.plin_number;
-        if (infoNumber) infoNumber.textContent = number || '966314626';
+        if (infoNumber) infoNumber.textContent = config.yape_number || '966314626';
         if (infoTitular) infoTitular.textContent = 'Titular: ' + (config.titular || 'Out Silver Perú');
 
         // Calculate total
@@ -256,7 +373,7 @@
         }
 
         // QR
-        const qrData = selectedMethod === 'yape' ? config.yape_qr : config.plin_qr;
+        const qrData = config.yape_qr;
         if (qrContainer && qrImg) {
             if (qrData) {
                 qrImg.src = qrData;
@@ -269,7 +386,7 @@
         // Update header
         const infoHeader = document.getElementById('payment-info-header');
         if (infoHeader) {
-            infoHeader.textContent = selectedMethod === 'yape' ? 'Pagar con Yape' : 'Pagar con Plin';
+            infoHeader.textContent = 'Pagar con Yape';
         }
     }
 
@@ -401,9 +518,8 @@
     function extractOperationCode(text) {
         if (!text) return '';
         
-        // Common patterns for Yape/Plin operation codes
+        // Common patterns for Yape operation codes
         // Yape: "Nº de operación: XXXXXXXX" or similar
-        // Plin: alphanumeric codes
         
         const patterns = [
             /(?:n[°ºo]?\s*(?:de\s+)?operaci[oó]n|c[oó]digo|code|referencia|ref)\s*[:\-]?\s*([A-Za-z0-9\-]{6,20})/i,
@@ -445,8 +561,8 @@
     function populateConfirmation() {
         // Method
         if (confirmMethodEl) {
-            const methodName = selectedMethod === 'yape' ? 'Yape' : 'Plin';
-            const methodColor = selectedMethod === 'yape' ? '#6B2FA0' : '#00B140';
+            const methodName = 'Yape';
+            const methodColor = '#6B2FA0';
             confirmMethodEl.innerHTML = `<span style="color: ${methodColor}; font-weight: 800;">${methodName}</span>`;
         }
 
@@ -522,7 +638,7 @@
     }
 
     // --- CONFIRM & SEND WHATSAPP ---
-    function confirmAndSendWhatsApp() {
+    async function confirmAndSendWhatsApp() {
         const code = confirmCodeInput ? confirmCodeInput.value.trim() : '';
 
         if (!code) {
@@ -537,16 +653,39 @@
             return;
         }
 
-        // Save code to history
-        saveUsedCode(code);
+        // Abrir la pestaña ya (dentro del gesto de clic del usuario) para que el navegador
+        // no la bloquee como pop-up; la URL real se completa cuando termine la subida.
+        const whatsappWindow = window.open('', '_blank');
+
+        if (btnNext) {
+            btnNext.disabled = true;
+            btnNext.innerHTML = '⏳ Subiendo comprobante...';
+        }
+
+        let imageUrl = await registerPaymentRemote(code);
+        
+        // Si no hay URL remota (Google Sheets no configurado o falló), guardar base64 localmente
+        if (!imageUrl && uploadedPreviewUrl) {
+            try {
+                imageUrl = await compressImageForUpload(uploadedPreviewUrl, 600, 0.5);
+            } catch (e) {
+                imageUrl = uploadedPreviewUrl;
+            }
+        }
+        
+        saveUsedCodeLocal(code, imageUrl);
 
         // Build WhatsApp message
-        const message = buildWhatsAppMessage(code);
+        const message = buildWhatsAppMessage(code, imageUrl);
         const encodedMessage = encodeURIComponent(message);
         const phoneNumber = '51966314626';
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
-        window.open(whatsappUrl, '_blank');
+        if (whatsappWindow) {
+            whatsappWindow.location.href = whatsappUrl;
+        } else {
+            window.open(whatsappUrl, '_blank');
+        }
         closeModal();
 
         // Clear cart
@@ -559,10 +698,10 @@
         showToast('✅ ¡Pedido enviado! Revisa tu WhatsApp para coordinar con el vendedor.');
     }
 
-    function buildWhatsAppMessage(operationCode) {
+    function buildWhatsAppMessage(operationCode, imageUrl) {
         if (!checkoutData) return '';
 
-        const methodName = selectedMethod === 'yape' ? 'Yape' : 'Plin';
+        const methodName = 'Yape';
         let message = '¡Hola! Quisiera comprar los siguientes productos en Out Silver:\n\n';
 
         // Items
@@ -599,7 +738,7 @@
         message += `- Método: ${methodName}\n`;
         message += `- Código de Operación: *${operationCode}*\n`;
         message += `- Monto Pagado: S/ ${checkoutData.total.toFixed(2)}\n\n`;
-        message += `📸 _Adjunto captura del comprobante de pago._\n\n`;
+        message += `📸 _Por favor, adjunta también la captura del comprobante en este chat._\n\n`;
         message += `Por favor, verifica el pago y confirma mi pedido. ¡Gracias! 🙏`;
 
         return message;

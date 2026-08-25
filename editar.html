@@ -206,6 +206,8 @@
             <li><a href="editar.html" class="active">Editar Producto</a></li>
             <li><a href="stock.html">Gestión de Stock</a></li>
             <li><a href="metodo-pago.html">Método de Pago</a></li>
+            <li><a href="historial-pagos.html">Seguimiento de Pagos</a></li>
+            <li><a href="pendientes-programar.html">Pendientes a Programar</a></li>
         </ul>
     </aside>
 
@@ -302,8 +304,9 @@
 
             </div>
 
-            <div class="actions">
+            <div class="actions" style="display: flex; gap: 15px;">
                 <button type="submit" class="btn btn-primary" id="btn-save" disabled>Guardar Cambios</button>
+                <button type="button" class="btn" id="btn-delete" style="background-color: #dc3545; display: none;">Eliminar Producto</button>
             </div>
         </form>
     </div>
@@ -384,12 +387,14 @@
                         }
                         
                         btnSave.disabled = false;
+                        document.getElementById('btn-delete').style.display = 'block';
                     }
                 } else {
                     currentProduct = null;
                     document.getElementById('product-form').reset();
                     previewContainer.style.display = 'none';
                     btnSave.disabled = true;
+                    document.getElementById('btn-delete').style.display = 'none';
                 }
             });
 
@@ -446,6 +451,60 @@
                     if (error.name !== 'AbortError') {
                         console.error(error);
                         alert('Hubo un error al guardar el archivo: ' + error.message);
+                    }
+                }
+            });
+
+            // Lógica para Eliminar Producto
+            document.getElementById('btn-delete').addEventListener('click', async () => {
+                if (!currentProduct) return;
+                
+                if (confirm(`¿Estás seguro de que deseas ELIMINAR el producto "${currentProduct.titulo}"? Esta acción no se puede deshacer.`)) {
+                    
+                    if (!window.showSaveFilePicker) {
+                        alert('Tu navegador no soporta el guardado directo de archivos. Usa Google Chrome, Microsoft Edge, o Brave.');
+                        return;
+                    }
+
+                    // Remover de la base de datos local
+                    window.productosData = window.productosData.filter(p => p.id !== currentProductId);
+                    
+                    const jsContent = `window.productosData = ${JSON.stringify(window.productosData, null, 4)};`;
+
+                    try {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: 'productos-db.js',
+                            types: [{
+                                description: 'JavaScript File',
+                                accept: {'text/javascript': ['.js']},
+                            }],
+                        });
+
+                        const writable = await handle.createWritable();
+                        await writable.write(jsContent);
+                        await writable.close();
+
+                        alert('¡Producto eliminado con éxito! Recarga tu tienda para ver los cambios.');
+                        
+                        // Limpiar formulario y selector
+                        document.getElementById('product-form').reset();
+                        previewContainer.style.display = 'none';
+                        btnSave.disabled = true;
+                        document.getElementById('btn-delete').style.display = 'none';
+                        currentProduct = null;
+                        currentProductId = null;
+                        
+                        // Refrescar selector
+                        productSelector.innerHTML = '<option value="">-- Seleccionar --</option>';
+                        populateProductDropdown();
+                        
+                        statusBox.innerHTML = `<strong>Estado:</strong> Conectado a la base de datos. Tienes <strong>${window.productosData.length} productos</strong> actualmente.`;
+
+                    } catch (error) {
+                        if (error.name !== 'AbortError') {
+                            console.error(error);
+                            alert('Hubo un error al eliminar el archivo: ' + error.message);
+                        }
                     }
                 }
             });
